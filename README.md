@@ -8,10 +8,10 @@ Made for iPads (Safari, iPadOS 15 or newer). It also works on computers.
 
 | Menu button | What it does |
 |---|---|
-| **Fossil Match** | Tap matching fossils (Mesosaurus, Glossopteris, Lystrosaurus, Cynognathus) on different continents. When all the places for one fossil are found, the continents slide back to where they were when it lived. Then a card opens with photos, short facts, and "The evidence." After all four, students can see all the fossils together on Gondwana. |
+| **Fossil Match** | Tap matching fossils (Mesosaurus, Glossopteris, Lystrosaurus, Cynognathus) on different continents. When all the places for one fossil are found, the continents slide back to where they were when it lived. Then a card opens with photos, short facts, and "The evidence." After all four, confetti and fireworks fill the screen, and students can see all the fossils together on Gondwana. Once all four are matched, the game starts fresh the next time it's opened. If students leave before finishing, their matches are kept. |
 | **Rock Match** | The same idea with matching mountains (Appalachians, Greenland, Scotland, Norway, Morocco) and matching 2-billion-year-old rocks (Brazil and Ghana). |
-| **Time Machine** | A timeline from 300 million years ago to today. Tap **Play**, drag the round button, or tap a date to read about it. The orange **Chicago** pin shows that Chicago was near the equator long ago. |
-| **Puzzle** | The Pangaea Puzzle on a flat map. **Easy**: pieces are already turned the right way and there are outlines. **Challenge**: pieces start like today's map, students turn them with two fingers (or the Turn buttons), and there are no outlines. **Shelves** shows the continental shelves; the continents fit even better with them. When it's solved, colored fossil stripes appear and line up across the pieces. |
+| **Time Machine** | A timeline from 300 million years ago to today. Tap **Play**, drag the round button, or tap a date to read about it. The view is tilted toward the South Pole, and the little fossil pictures ride along with their continents. |
+| **Puzzle** | The Pangaea Puzzle on a flat map. The pieces start away from their real spots. **Easy**: pieces are already turned the right way and there are outlines. **Challenge**: pieces start turned the way they are on today's map, students turn them with two fingers (or the Turn buttons), and there are no outlines. **Shelves** shows the continental shelves (a short note pops up to explain them); the continents fit even better with them. Each continent glows its own color when it snaps into place. When it's solved, colored fossil stripes appear and line up across the pieces. |
 | **Whole Earth** | Back to the start. |
 | **Show** | Continent names, continental shelves, lines of latitude, help, and credits. |
 
@@ -42,7 +42,7 @@ You can edit these on GitHub with the pencil icon. Each one has notes at the top
 | Fossil names, places, facts, bullets, photos | `js/data/fossils.js` |
 | Mountain and rock matches | `js/data/rocks.js` |
 | Time Machine stops and words | `js/data/timemachine.js` |
-| Puzzle starting spots | `js/data/puzzle.js` |
+| Puzzle starting spots (`sx`, `sy`) | `js/data/puzzle.js` |
 | Colors and sizes | `css/app.css` |
 
 Photos live in the `photos/` folder. The small round pictures on the globe are in `photos/thumbs/`.

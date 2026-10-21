@@ -6,7 +6,7 @@
      img       pictures in data/puzzle/ (land and continental shelf)
      x, y      where the picture's top-left corner goes when solved (board pixels)
      cx, cy    the middle of the piece when solved
-     sx, sy    where the piece starts (like on a map of today's world)
+     sx, sy    where the piece starts (away from its real spot, to make it a puzzle!)
      todayDeg  how much the piece is turned on today's map (Challenge level)
    You can move a starting spot by changing sx and sy.
    ===================================================================== */
@@ -49,8 +49,8 @@ window.PUZZLE = {
    "northDeg": 0.1,
    "lat": -19.45,
    "lon": 46.86,
-   "sx": 381.5,
-   "sy": 400.3,
+   "sx": -820,
+   "sy": 960,
    "todayDeg": -0.1
   },
   {
@@ -65,8 +65,8 @@ window.PUZZLE = {
    "northDeg": 35.4,
    "lat": 24.1,
    "lon": 79.02,
-   "sx": 673.3,
-   "sy": -24.9,
+   "sx": -1150,
+   "sy": -720,
    "todayDeg": -35.4
   },
   {
@@ -81,8 +81,8 @@ window.PUZZLE = {
    "northDeg": 28.4,
    "lat": -87.32,
    "lon": 77.94,
-   "sx": 623.5,
-   "sy": 676.3,
+   "sx": -1120,
+   "sy": 760,
    "todayDeg": -28.4
   },
   {
@@ -97,8 +97,8 @@ window.PUZZLE = {
    "northDeg": 39.5,
    "lat": -24.7,
    "lon": 135.16,
-   "sx": 1232.9,
-   "sy": 478.0,
+   "sx": -1260,
+   "sy": 40,
    "todayDeg": -39.5
   },
   {
@@ -113,8 +113,8 @@ window.PUZZLE = {
    "northDeg": -39.5,
    "lat": -15.6,
    "lon": -60.48,
-   "sx": -672.7,
-   "sy": 385.4,
+   "sx": 1420,
+   "sy": -620,
    "todayDeg": 39.5
   },
   {
@@ -129,8 +129,8 @@ window.PUZZLE = {
    "northDeg": 1.7,
    "lat": 55.15,
    "lon": -101.6,
-   "sx": -1085.9,
-   "sy": -326.7,
+   "sx": 1460,
+   "sy": 180,
    "todayDeg": -1.7
   },
   {
@@ -145,8 +145,8 @@ window.PUZZLE = {
    "northDeg": -35.4,
    "lat": 74.81,
    "lon": -41.4,
-   "sx": -489.6,
-   "sy": -555.2,
+   "sx": 1260,
+   "sy": 860,
    "todayDeg": 35.4
   },
   {
@@ -161,8 +161,8 @@ window.PUZZLE = {
    "northDeg": -124.9,
    "lat": 58.86,
    "lon": 83.28,
-   "sx": 812.0,
-   "sy": -440.4,
+   "sx": 760,
+   "sy": -1330,
    "todayDeg": 124.9
   }
  ],

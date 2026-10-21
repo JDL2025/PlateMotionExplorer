@@ -185,7 +185,7 @@ export function createMatch(api, ui, DATA, opt) {
       ui.closeCard();
       sel = si; found[si] = [k];
       const left = s.sites.length - 1;
-      ui.banner(`You found <b>${esc(s.name)}</b> in ${esc(s.sites[k].place)}!<small>Now find ${left === 1 ? 'the other' : `the other ${left}`} ${esc(s.name)} ${left === 1 ? 'place' : 'places'}. Spin the globe to look.</small>`);
+      ui.banner(`You found <b>${esc(s.name)}</b> in ${esc(s.sites[k].place)}!<small>Now <span class="hl">find ${left === 1 ? 'the other' : `the other ${left}`}</span> ${esc(s.name)} ${left === 1 ? 'place' : 'places'}. Spin the globe to look.</small>`);
       pinClasses(); updateArcs();
       return;
     }
@@ -193,14 +193,14 @@ export function createMatch(api, ui, DATA, opt) {
     if (si === sel) {
       if (found[si].includes(k)) {
         if (found[si].length === 1) { sel = -1; found[si] = []; ui.banner(null); pinClasses(); updateArcs(); }
-        else ui.banner(`You already found this one. Find ${cur.sites.length - found[si].length} more ${esc(cur.name)}!`, 3500);
+        else ui.banner(`You already found this one. <span class="hl">Find ${cur.sites.length - found[si].length} more</span> ${esc(cur.name)}!`, 3500);
         return;
       }
       found[si].push(k);
       pinClasses(); updateArcs();
       if (found[si].length === cur.sites.length) { complete(si); return; }
       const left = cur.sites.length - found[si].length;
-      ui.banner(`Yes! That is ${esc(cur.name)} too. <b>${found[si].length} of ${cur.sites.length}</b> found.<small>Find ${left} more!</small>`);
+      ui.banner(`Yes! That is ${esc(cur.name)} too. <b>${found[si].length} of ${cur.sites.length}</b> found.<small><span class="hl">Find ${left} more!</span></small>`);
       return;
     }
     // a different fossil or rock
@@ -311,7 +311,11 @@ export function createMatch(api, ui, DATA, opt) {
   }
 
   function checkFinale() {
-    if (done.size === sets.length && !finaleShown) { finaleShown = true; later(400, finalePrompt); }
+    if (done.size === sets.length && !finaleShown) {
+      finaleShown = true;
+      ui.celebrate(`You matched all ${sets.length}!`);
+      later(2800, finalePrompt);
+    }
     else if (done.size < sets.length) ui.banner(`<b>${done.size} of ${sets.length}</b> matched. Tap another ${noun} to find the next match!`, 5000);
   }
   function finalePrompt() {
@@ -350,6 +354,9 @@ export function createMatch(api, ui, DATA, opt) {
     api.keepAnimating('arcs-' + opt.id, false);
     clearPins(); clearLines();
     found.forEach((f, i) => { found[i] = []; });
+    // After every match is done, the game starts fresh next time.
+    // (If students leave before finishing, their matches are kept.)
+    if (done.size === sets.length) { done.clear(); finaleShown = false; }
     ui.hudExtra.innerHTML = '';
   }
 

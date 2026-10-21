@@ -302,6 +302,59 @@ export function createUI(api) {
   };
 
   // ---------------------------------------------------------------
+  // Full-screen celebration: confetti and fireworks
+  // ---------------------------------------------------------------
+  ui.celebrate = (title, sub = 'Great detective work!') => {
+    const cv = document.createElement('canvas'); cv.className = 'celebrate';
+    const msg = document.createElement('div'); msg.className = 'celebrate-msg';
+    msg.innerHTML = `<b>${esc(title)}</b><span>${esc(sub)}</span>`;
+    document.body.append(cv, msg);
+    const dpr = Math.min(2, window.devicePixelRatio || 1), W = innerWidth, H = innerHeight;
+    cv.width = W * dpr; cv.height = H * dpr;
+    const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
+    const COLORS = ['#e9b47c', '#7fe0a0', '#8cc4f0', '#ffd84d', '#ff8f7a', '#c39bff', '#ffffff'];
+    const R = (a, b) => a + Math.random() * (b - a);
+    const conf = [];
+    const n = Math.round(Math.min(260, W * H / 4500));
+    for (let i = 0; i < n; i++) conf.push({ x: R(0, W), y: R(-H * 0.9, -10), vx: R(-50, 50), vy: R(140, 280), r: R(0, 6.28), vr: R(-7, 7), w: R(6, 11), h: R(10, 17), c: COLORS[i % COLORS.length], ph: R(0, 6.28) });
+    const sparks = [];
+    const bursts = [0.15, 0.6, 1.0, 1.45, 1.9, 2.4, 2.9].map(t => ({ t, x: R(W * 0.15, W * 0.85), y: R(H * 0.12, H * 0.5), c: COLORS[Math.floor(R(0, COLORS.length))], done: false }));
+    const t0 = performance.now(); let last = t0;
+    const DUR = 5.4;
+    const step = (now) => {
+      const t = (now - t0) / 1000, dt = Math.min(0.05, (now - last) / 1000); last = now;
+      ctx.clearRect(0, 0, W, H);
+      const fade = t > DUR - 0.9 ? Math.max(0, (DUR - t) / 0.9) : 1;
+      // fireworks
+      for (const b of bursts) if (!b.done && t >= b.t) {
+        b.done = true;
+        for (let i = 0; i < 70; i++) { const a = R(0, 6.28), sp = R(120, 400); sparks.push({ x: b.x, y: b.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: R(1.0, 1.7), age: 0, c: Math.random() < 0.25 ? '#ffffff' : b.c }); }
+      }
+      ctx.globalCompositeOperation = 'lighter';
+      for (const p of sparks) {
+        p.age += dt; if (p.age > p.life) continue;
+        p.vx *= 0.985; p.vy = p.vy * 0.985 + 160 * dt; p.x += p.vx * dt; p.y += p.vy * dt;
+        const a = (1 - p.age / p.life) * fade;
+        ctx.globalAlpha = a; ctx.fillStyle = p.c;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 2.6, 0, 6.283); ctx.fill();
+        ctx.globalAlpha = a * 0.25; ctx.beginPath(); ctx.arc(p.x, p.y, 7, 0, 6.283); ctx.fill();
+      }
+      ctx.globalCompositeOperation = 'source-over';
+      // confetti
+      for (const p of conf) {
+        p.ph += dt * 3; p.x += (p.vx + Math.sin(p.ph) * 40) * dt; p.y += p.vy * dt; p.r += p.vr * dt;
+        if (p.y > H + 20 && t < DUR - 1.6) { p.y = R(-60, -10); p.x = R(0, W); }
+        ctx.save(); ctx.globalAlpha = fade; ctx.translate(p.x, p.y); ctx.rotate(p.r);
+        ctx.scale(1, Math.abs(Math.cos(p.ph)) * 0.8 + 0.2);
+        ctx.fillStyle = p.c; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
+      }
+      if (t < DUR) requestAnimationFrame(step); else { cv.remove(); }
+    };
+    requestAnimationFrame(step);
+    setTimeout(() => msg.remove(), 3600);
+  };
+
+  // ---------------------------------------------------------------
   // About + first-time help
   // ---------------------------------------------------------------
   $('#aboutBody').innerHTML = `

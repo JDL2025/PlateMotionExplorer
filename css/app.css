@@ -615,3 +615,31 @@ button:focus-visible, input:focus-visible + span { outline: 3px solid var(--suns
 .ye-nav .tour-btn.primary { justify-self: end; }
 .legend span b { color: var(--ink); }
 .puzzle-on .dock, .puzzle-on .hud { display: none !important; }
+
+/* ---------- celebration (confetti + fireworks) ---------- */
+.celebrate { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 58; pointer-events: none; }
+.celebrate-msg {
+  position: fixed; z-index: 59; left: 50%; top: 40%; transform: translate(-50%, -50%); pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; white-space: nowrap;
+  padding: 18px 34px; border-radius: 26px; background: rgba(14,18,27,.72); border: 2px solid rgba(233,180,124,.7);
+  box-shadow: 0 0 60px rgba(233,180,124,.45); animation: celebrateMsg 3.6s ease forwards;
+}
+.celebrate-msg b { font-family: var(--display); font-weight: 800; font-size: clamp(44px, 8vw, 84px); line-height: 1; color: var(--butterscotch); text-shadow: 0 0 24px rgba(233,180,124,.8); }
+.celebrate-msg span { font-size: 22px; font-weight: 700; color: #fff; }
+@keyframes celebrateMsg { 0% { opacity: 0; transform: translate(-50%, -50%) scale(.4); } 12% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); } 20% { transform: translate(-50%, -50%) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.04); } }
+
+/* yellow words that tell students what to do next */
+.banner .hl { color: #ffd84d; font-weight: 800; }
+.fpin.tiny .fp-img { width: 38px; height: 38px; }
+
+/* puzzle: what are shelves? */
+.pz-tip {
+  position: absolute; z-index: 5; left: 50%; transform: translateX(-50%); bottom: calc(96px + var(--safe-b));
+  width: min(520px, calc(100vw - 24px)); display: grid; grid-template-columns: 34px 1fr 44px; gap: 12px; align-items: start;
+  padding: 14px 12px 14px 16px; border-radius: 18px; background: var(--glass); border: 1px solid rgba(140,196,240,.6);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 14px 36px rgba(0,0,0,.5);
+  animation: rise .25s ease-out;
+}
+.pz-tip-ico { width: 34px; height: 34px; border-radius: 10px; margin-top: 2px; background: linear-gradient(135deg, #46a0d8, #8fd0f5); box-shadow: inset 0 0 0 2px rgba(170,225,255,.9); }
+.pz-tip b { font-family: var(--display); font-size: 22px; color: var(--sunset); }
+.pz-tip p { margin: 2px 0 0; font-size: 16px; line-height: 1.4; }

@@ -42,7 +42,7 @@ export function init(api, ui) {
     root.querySelector('[data-p="exit"]').onclick = () => ui.exitActivity();
     root.querySelector('[data-p="rotl"]').onclick = () => rotateSel(-15);
     root.querySelector('[data-p="rotr"]').onclick = () => rotateSel(15);
-    root.querySelector('[data-p="shelf"]').onclick = () => setShelf(!shelfOn);
+    root.querySelector('[data-p="shelf"]').onclick = () => setShelf(!shelfOn, true);
     root.querySelector('[data-p="hint"]').onclick = () => hint();
     root.querySelector('[data-p="again"]').onclick = () => chooseLevel();
     root.querySelector('[data-p="help"]').onclick = () => helpCard();
@@ -140,7 +140,7 @@ export function init(api, ui) {
       <h3 class="sec">Pick a level</h3>
       <div class="pz-levels">
         <button class="pz-level" data-lv="easy"><span class="lv">🙂</span><span><b>Easy</b><span>The pieces are already turned the right way, and there are outlines to help.</span></span></button>
-        <button class="pz-level" data-lv="challenge"><span class="lv">🧠</span><span><b>Challenge</b><span>The pieces start like a map of today. You turn them with two fingers or the Turn buttons. No outlines!</span></span></button>
+        <button class="pz-level" data-lv="challenge"><span class="lv">🧠</span><span><b>Challenge</b><span>The pieces start turned the way they are on today’s map. You turn them with two fingers or the Turn buttons. No outlines!</span></span></button>
       </div>`, false);
     cardEl.querySelectorAll('[data-lv]').forEach(b => b.onclick = () => { level = b.dataset.lv; reset(); closeCard(); });
     reset(true);
@@ -167,10 +167,22 @@ export function init(api, ui) {
     const n = pieces.filter(p => p.d.id !== anchorId).length, k = pieces.filter(p => p.placed && p.d.id !== anchorId).length;
     root.querySelector('#pzCount').innerHTML = `<b>${k}</b> of ${n} pieces in place`;
   }
-  function setShelf(on) {
+  function setShelf(on, fromButton) {
     shelfOn = on; root.classList.toggle('shelf-on', on);
     root.querySelector('[data-p="shelf"]').setAttribute('aria-pressed', String(on));
+    if (on && fromButton) shelfTip(); else hideTip();
   }
+  // a quick note that explains the light blue shelves
+  let tipEl = null, tipTimer = 0;
+  function shelfTip() {
+    hideTip();
+    tipEl = document.createElement('div'); tipEl.className = 'pz-tip';
+    tipEl.innerHTML = `<span class="pz-tip-ico" aria-hidden="true"></span><div><b>What are shelves?</b><p>The light blue edges are part of each continent too. They are covered by shallow ocean water, so they don’t look like land on a map.</p></div><button class="close" aria-label="Close">✕</button>`;
+    root.appendChild(tipEl);
+    tipEl.querySelector('.close').onclick = hideTip;
+    tipTimer = setTimeout(hideTip, 9000);
+  }
+  function hideTip() { clearTimeout(tipTimer); if (tipEl) { tipEl.remove(); tipEl = null; } }
   function hint() {
     root.ghost.style.transition = 'opacity .3s'; root.ghost.style.opacity = '1';
     later(2200, () => { if (level !== 'easy') root.ghost.style.opacity = '0'; });
@@ -245,12 +257,32 @@ export function init(api, ui) {
         pc.x = fx + (pc.d.cx - fx) * e2; pc.y = fy + (pc.d.cy - fy) * e2; pc.r = fr * (1 - e2);
         place(pc);
         if (t < 1) requestAnimationFrame(step);
-        else { pc.x = pc.d.cx; pc.y = pc.d.cy; pc.r = 0; place(pc); pc.el.classList.add('placed', 'flash'); later(900, () => pc.el.classList.remove('flash')); count(); afterPlace(pc); }
+        else { pc.x = pc.d.cx; pc.y = pc.d.cy; pc.r = 0; place(pc); pc.el.classList.add('placed'); glow(pc); count(); afterPlace(pc); }
       };
       requestAnimationFrame(step);
     } else if (dist < tol * 1.8 && level === 'challenge' && dr >= tolR) {
       say(`${pc.d.name} is close! Try turning it.`);
     }
+  }
+  // each continent glows its own color when it snaps into place
+  const GLOW = { NA: '#ff8f7a', GR: '#e8f6ff', SA: '#7fe0a0', EU: '#c39bff', MG: '#ff7ac8', IN: '#ffd84d', AU: '#ffa94d', AN: '#7fd3ff', AF: '#e9b47c' };
+  function glow(pc) {
+    const c = GLOW[pc.d.id] || '#7fe0a0';
+    const frames = [
+      { filter: `drop-shadow(0 0 0px ${c})` },
+      { filter: `drop-shadow(0 0 14px ${c}) drop-shadow(0 0 6px ${c}) brightness(1.25)`, offset: 0.18 },
+      { filter: `drop-shadow(0 0 4px ${c})`, offset: 0.42 },
+      { filter: `drop-shadow(0 0 16px ${c}) drop-shadow(0 0 6px ${c}) brightness(1.2)`, offset: 0.62 },
+      { filter: `drop-shadow(0 0 3px ${c})` }
+    ];
+    pc.el.querySelectorAll('img').forEach(im => { try { im.animate(frames, { duration: 1600, easing: 'ease-out' }); } catch (e) {} });
+    // rings of light in the same color
+    const b = document.createElement('div'); b.className = 'pop-burst';
+    b.style.transform = `translate(${view.ox + pc.x * view.k}px, ${view.oy + pc.y * view.k}px)`; b.style.zIndex = 320;
+    b.innerHTML = `<div class="ring" style="border-color:${c};box-shadow:0 0 24px ${c}, inset 0 0 18px ${c}"></div><div class="ring r2" style="border-color:${c};box-shadow:0 0 18px ${c}"></div>` +
+      Array.from({ length: 10 }, (_, i) => `<div class="spark" style="--a:${i * 36}deg;--d:${60 + (i % 3) * 20}px;background:${c};box-shadow:0 0 10px 3px ${c}"></div>`).join('');
+    board.appendChild(b); later(1500, () => b.remove());
+    pc.name.animate([{ transform: pc.name.style.transform + ' scale(1)', color: '#fff' }, { transform: pc.name.style.transform + ' scale(1.35)', color: c }, { transform: pc.name.style.transform + ' scale(1)', color: '#fff' }], { duration: 1000, easing: 'ease-out' });
   }
   function afterPlace(pc) {
     const left = pieces.filter(p => !p.placed).length;
@@ -264,9 +296,10 @@ export function init(api, ui) {
   function win() {
     solved = true;
     say('You built Pangaea!');
-    pieces.forEach(pc => { pc.el.classList.add('flash'); });
+    pieces.forEach(pc => glow(pc));
+    later(500, () => ui.celebrate('You built Pangaea!', 'All the continents fit together!'));
     later(700, () => root.stripes.classList.add('on'));
-    later(1500, () => {
+    later(3200, () => {
       const L = (P.legend || []).map(([id, name, col, pat]) => `<div><i style="width:34px;height:12px;border-radius:3px;background:${col};flex:none"></i><span><b>${esc(name)}</b> (${esc(pat)})</span></div>`).join('');
       cardEl = card(`<h2>You built Pangaea!</h2>
         <p class="lead">This is about how the continents fit together ${P.T} million years ago.</p>
@@ -305,7 +338,7 @@ export function init(api, ui) {
   function closeCard() { ui.speech.stop(); if (cardEl) { cardEl.remove(); cardEl = null; } }
 
   function cleanup() {
-    timers.forEach(clearTimeout); timers = [];
+    timers.forEach(clearTimeout); timers = []; hideTip();
     closeCard();
     window.removeEventListener('resize', layout);
     root.hidden = true; root.innerHTML = ''; board = null; pieces = [];

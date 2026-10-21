@@ -16,7 +16,7 @@ window.TIME_MACHINE = {
       'Tap Play to watch the continents move all the way to today.',
       'Or drag the round button on the timeline to go back and forth in time.',
       'Tap a date on the timeline to stop there and read about it.',
-      'Watch the orange Chicago pin. Where was Chicago long ago?'
+      'Watch the little fossil pictures. They ride along with their continents!'
     ]
   },
   start: 300,
@@ -25,9 +25,9 @@ window.TIME_MACHINE = {
       age: 300, label: '300 M', title: 'The Continents Crash Together',
       bullets: [
         'The continents are coming together into one giant supercontinent.',
-        'Chicago is near the equator! The land is covered with hot, steamy swamps.',
-        'Those swamps turned into the coal that is found in Illinois today.',
-        'Not long before this, the Tully monster swam near Chicago. It is the Illinois state fossil.'
+        'Much of North America and Europe is near the equator. The land is covered with hot, steamy swamps.',
+        'Plants from those swamps turned into coal. That is where much of the coal in Illinois comes from.',
+        'Not long before this, a strange sea animal called the Tully monster lived in Illinois. It is the Illinois state fossil.'
       ],
       photos: [
         ["photos/tm300-1.jpg", "An artist’s idea of a swampy forest about 300 million years ago.", "Source: deviantart.com"],

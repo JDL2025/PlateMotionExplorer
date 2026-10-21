@@ -10,12 +10,11 @@ export function init(api, ui) {
   const THREE = api.THREE, esc = ui.esc, icon = ui.icon;
   const S = TM.stops.slice().sort((a, b) => b.age - a.age);
   const MAX = Math.max(TM.start || 300, ...S.map(s => s.age));
-  const chicago = { lat: 41.88, lon: -87.63, g: api.groupAt(41.88, -87.63) };
   const fossilSites = [];
   (window.FOSSILS ? window.FOSSILS.sets : []).forEach(s => s.sites.forEach(site => fossilSites.push({ s, site: { lat: site.lat, lon: site.lon, g: api.groupAt(site.lat, site.lon) } })));
 
   let on = false, bar = null, playing = false, idx = -1, gridWas = false, cancels = [], timers = [], dragging = false;
-  let cityEl = null, equator = null, fpins = [], gStems = null;
+  let equator = null, fpins = [], built = false;
   const later = (ms, f) => { const id = setTimeout(f, ms); timers.push(id); return id; };
   const xOf = t => (MAX - t) / MAX;
 
@@ -37,7 +36,8 @@ export function init(api, ui) {
     const q = api.groupQuatAt(api.groupAt(5, 20), t, null);
     const v = api.latLonToLocal(5, 0).applyQuaternion(q);
     const ll = api.localToLatLon(v);
-    api.flyToLatLon(Math.max(-15, Math.min(25, ll.lat)), ll.lon, api.fitDist(true) * 1.05, ms);
+    // tilted toward the South Pole, so the fossil pictures (mostly in the south) are easy to see
+    api.flyToLatLon(-45, ll.lon, api.fitDist(true) * 1.05, ms);
   }
 
   // ---------- moving through time ----------
@@ -45,7 +45,9 @@ export function init(api, ui) {
     t = Math.max(0, Math.min(MAX, t));
     api.setTime(t, null);
     updateBar(t); readout(t);
+    const again = t < 0.5; if (again !== lastAgain) { lastAgain = again; updatePlayBtn(); }
   }
+  let lastAgain = null;
   function travelTo(t, ms, done) {
     cancels.forEach(f => f()); cancels = [];
     const from = api.time;
@@ -126,19 +128,13 @@ export function init(api, ui) {
     bar.querySelectorAll('[data-s]').forEach((b, i) => b.classList.toggle('on', Math.abs(S[i].age - t) < 0.6));
   }
   function readout(t) {
-    const lat = api.localToLatLon(api.siteLocal(chicago)).lat;
-    const where = Math.abs(lat) < 12 ? 'near the equator!' : Math.abs(lat) < 24 ? 'in the hot tropics' : Math.abs(lat) < 36 ? 'in a warm place' : 'about where it is today';
-    ui.hudExtra.innerHTML = `<div class="readout"><div class="r-big">${t < 0.5 ? 'Today' : `${Math.round(t)} million years ago`}</div>
-      <dl><dt>Chicago</dt><dd>${Math.abs(lat).toFixed(0)}° ${lat >= 0 ? 'north' : 'south'} of the equator<span>${where}</span></dd></dl></div>`;
+    ui.hudExtra.innerHTML = `<div class="readout"><div class="r-sub">Time Machine</div><div class="r-big">${t < 0.5 ? 'Today' : `${Math.round(t)} million years ago`}</div></div>`;
   }
 
-  // ---------- markers: Chicago, fossils, equator ----------
+  // ---------- markers: fossils, equator ----------
   function buildMarkers() {
     clearMarkers();
-    cityEl = document.createElement('div'); cityEl.className = 'city-pin'; cityEl.innerHTML = '<i></i>Chicago';
-    document.getElementById('pins').appendChild(cityEl);
-    gStems = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    document.getElementById('stems').appendChild(gStems);
+    built = true;
     fpins = fossilSites.map(f => {
       const el = document.createElement('div'); el.className = 'fpin tiny';
       el.innerHTML = `<span class="fp-img" style="background-color:${f.s.color};background-image:url('${esc(f.s.thumb)}')"></span>`;
@@ -151,23 +147,13 @@ export function init(api, ui) {
     api.requestRender();
   }
   function clearMarkers() {
-    if (cityEl) { cityEl.remove(); cityEl = null; }
+    built = false;
     fpins.forEach(p => p.el.remove()); fpins = [];
-    if (gStems) { gStems.remove(); gStems = null; }
     if (equator) { equator.dispose(); equator = null; }
     api.afterRenderHooks.delete(place);
   }
   function place() {
-    if (!cityEl) return;
-    const w = api.siteWorld(chicago, 1), f = api.facing(w);
-    let svg = '';
-    if (f < 0.08) cityEl.style.display = 'none';
-    else {
-      const p = api.project(w);
-      cityEl.style.display = '';
-      cityEl.style.transform = `translate(${p.x + 10}px, ${p.y - 40}px)`;
-      svg += `<line x1="${p.x}" y1="${p.y}" x2="${p.x + 14}" y2="${p.y - 26}" style="stroke:#ffb37a"/><circle cx="${p.x}" cy="${p.y}" r="4.5" style="fill:#ffb37a"/>`;
-    }
+    if (!built) return;
     for (const fp of fpins) {
       const w2 = api.siteWorld(fp.f.site, 1), f2 = api.facing(w2);
       if (f2 < 0.1 || !api.siteVisible(fp.f.site)) { fp.el.style.display = 'none'; continue; }
@@ -175,7 +161,6 @@ export function init(api, ui) {
       fp.el.style.display = '';
       fp.el.style.transform = `translate(${p.x}px, ${p.y}px) translate(-50%, -50%)`;
     }
-    gStems.innerHTML = svg;
   }
 
   // ---------- cards ----------
