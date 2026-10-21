@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Plate Motion Explorer</title>
+  <meta name="description" content="Match fossils and rocks across the oceans, travel back in time, and put Pangaea back together on a 3D globe.">
+  <meta name="theme-color" content="#141a26">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Plate Motion">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/icon-180.png">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div id="stage" aria-label="3D globe of Earth"></div>
+  <div id="overlay"><svg id="stems"></svg><div id="tags"></div><div id="pins"></div></div>
+
+  <!-- Top-left: title + what to do -->
+  <header class="hud" id="hud">
+    <h1 id="appTitle">Plate Motion Explorer</h1>
+    <p class="hud-line" id="hudLine">Pick an activity in the menu bar below.</p>
+    <div id="hudExtra"></div>
+  </header>
+
+  <div class="loading" id="loading">Loading the globe…</div>
+
+  <!-- Bottom menu bar -->
+  <nav class="dock" id="dock" aria-label="Main">
+    <button class="dock-btn" data-go="fossils"><svg viewBox="0 0 24 24"><path d="M4 18c3-1 4-4 6-6s5-2 6-5"/><path d="M16 7c1.5-1.5 3-2 4-1.5-.2 1.6-1.4 2.6-3 3"/><path d="M6.5 16.5l-2-2M9 13.7l-2-2M11.6 11.2l-1.8-2.2M14.2 9.3l-1.5-2.4"/><path d="M4 18c-.8.3-1.6.3-2 0"/></svg><span>Fossil Match</span></button>
+    <button class="dock-btn" data-go="rocks"><svg viewBox="0 0 24 24"><path d="M2 19l6-9 4 5 3-4 7 8z"/><path d="M8 10l2 3M15 11l1.5 2"/></svg><span>Rock Match</span></button>
+    <button class="dock-btn" data-go="time"><svg viewBox="0 0 24 24"><path d="M6 3h12M6 21h12M7 3c0 5 5 6 5 9s-5 4-5 9M17 3c0 5-5 6-5 9s5 4 5 9"/></svg><span>Time Machine</span></button>
+    <button class="dock-btn" data-go="puzzle"><svg viewBox="0 0 24 24"><path d="M4 8h4a2 2 0 1 1 4 0h4v4a2 2 0 1 1 0 4v4h-4a2 2 0 1 0-4 0H4v-4a2 2 0 1 0 0-4z"/></svg><span>Puzzle</span></button>
+    <button class="dock-btn" id="homeBtn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c3 3 3 14 0 17M12 3.5c-3 3-3 14 0 17"/></svg><span>Whole Earth</span></button>
+    <button class="dock-btn" data-panel="show"><svg viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg><span>Show</span></button>
+  </nav>
+
+  <!-- Show panel -->
+  <section class="panel" id="panel-show" hidden aria-label="Show">
+    <div class="panel-head"><h2>Show</h2><button class="close" data-close aria-label="Close">✕</button></div>
+    <div class="panel-body">
+      <label class="toggle"><input type="checkbox" data-show="names" checked><span>Continent names</span></label>
+      <label class="toggle"><input type="checkbox" data-show="shelf" checked><span>Continental shelves <small>The edges of the continents, under shallow sea (light blue)</small></span></label>
+      <label class="toggle"><input type="checkbox" data-show="grid"><span>Lines of latitude <small>The equator and other lines on the globe</small></span></label>
+      <button class="wide-btn" id="fullscreenBtn" hidden>Full screen</button>
+      <button class="wide-btn ghost" data-panel="help">How to explore (help)</button>
+      <button class="wide-btn ghost" data-panel="about">About this site &amp; credits</button>
+    </div>
+  </section>
+
+  <!-- Help / start menu -->
+  <section class="panel panel-wide" id="panel-help" hidden aria-label="How to explore">
+    <div class="panel-head"><h2>How to explore</h2><button class="close" data-close aria-label="Close">✕</button></div>
+    <div class="panel-body help" id="helpBody">
+      <button class="say-btn" data-say-target="#helpBody"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg><span>Read to me</span></button>
+      <ul class="gestures">
+        <li><span class="g-icon" aria-hidden="true">☝️</span><div><b>Spin Earth</b>Drag with one finger.</div></li>
+        <li><span class="g-icon" aria-hidden="true">🤏</span><div><b>Zoom in and out</b>Pinch with two fingers.</div></li>
+      </ul>
+      <h3 class="group-title">Pick an activity</h3>
+      <div class="starts">
+        <button class="start-row" data-go="fossils"><span class="s-ico s1"><svg viewBox="0 0 24 24"><path d="M4 18c3-1 4-4 6-6s5-2 6-5"/><path d="M16 7c1.5-1.5 3-2 4-1.5-.2 1.6-1.4 2.6-3 3"/><path d="M6.5 16.5l-2-2M9 13.7l-2-2M11.6 11.2l-1.8-2.2M14.2 9.3l-1.5-2.4"/></svg></span><div><b>Fossil Match</b><span>Find the same fossils on different continents.</span></div></button>
+        <button class="start-row" data-go="rocks"><span class="s-ico s2"><svg viewBox="0 0 24 24"><path d="M2 19l6-9 4 5 3-4 7 8z"/></svg></span><div><b>Rock Match</b><span>Find mountains and rocks that match across the ocean.</span></div></button>
+        <button class="start-row" data-go="time"><span class="s-ico s3"><svg viewBox="0 0 24 24"><path d="M6 3h12M6 21h12M7 3c0 5 5 6 5 9s-5 4-5 9M17 3c0 5-5 6-5 9s5 4 5 9"/></svg></span><div><b>Time Machine</b><span>Watch the continents move for 300 million years.</span></div></button>
+        <button class="start-row" data-go="puzzle"><span class="s-ico s4"><svg viewBox="0 0 24 24"><path d="M4 8h4a2 2 0 1 1 4 0h4v4a2 2 0 1 1 0 4v4h-4a2 2 0 1 0-4 0H4v-4a2 2 0 1 0 0-4z"/></svg></span><div><b>Pangaea Puzzle</b><span>Put the continents back together.</span></div></button>
+      </div>
+      <p class="hint">Lost? Tap <b>Whole Earth</b> to go back to the start.</p>
+      <button class="wide-btn" data-close>Start exploring</button>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-about" hidden aria-label="About">
+    <div class="panel-head"><h2>About this site</h2><button class="close" data-close aria-label="Close">✕</button></div>
+    <div class="panel-body about" id="aboutBody"></div>
+  </section>
+
+  <!-- Info card -->
+  <article class="card" id="card" hidden aria-live="polite">
+    <div class="card-scroll" id="cardScroll">
+      <div class="card-top">
+        <span class="badge" id="cardBadge"></span>
+        <span class="card-top-r">
+          <button class="say-btn small" id="cardSay"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg><span>Read to me</span></button>
+          <button class="close" id="cardClose" aria-label="Close card">✕</button>
+        </span>
+      </div>
+      <div id="cardContent"></div>
+    </div>
+    <div class="tourbar" id="tourBar" hidden>
+      <button class="tour-btn" id="tourPrev">Back</button>
+      <span id="tourProgress"></span>
+      <button class="tour-btn primary" id="tourNext">Next</button>
+    </div>
+  </article>
+
+  <!-- Big photo viewer -->
+  <div class="lightbox" id="lightbox" hidden>
+    <div class="lb-track" id="lbTrack"></div>
+    <div class="lb-cap" id="lbCap"></div>
+    <button class="lb-close" id="lbClose" aria-label="Close photo">✕</button>
+    <button class="lb-arrow prev" id="lbPrev" aria-label="Previous photo">‹</button>
+    <button class="lb-arrow next" id="lbNext" aria-label="Next photo">›</button>
+  </div>
+
+  <!-- Pangaea Puzzle (flat map) -->
+  <div class="puzzle" id="puzzle" hidden></div>
+
+  <!-- Message for very old browsers -->
+  <div class="fail" id="fail" hidden>
+    <h2>Plate Motion Explorer can’t start on this device</h2>
+    <p id="failText">This iPad or browser is too old for 3D pictures. Ask your teacher for help. (It needs iPadOS 15 or newer.)</p>
+  </div>
+  <script nomodule>document.getElementById('fail').hidden = false;</script>
+
+  <!-- Content you can edit (words, places, photos) -->
+  <script src="js/data/fossils.js"></script>
+  <script src="js/data/rocks.js"></script>
+  <script src="js/data/timemachine.js"></script>
+  <script src="js/data/puzzle.js"></script>
+  <!-- The program -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
