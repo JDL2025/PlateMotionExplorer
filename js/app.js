@@ -327,11 +327,11 @@ export function createUI(api) {
   // ---------------------------------------------------------------
   // Full-screen celebration: confetti and fireworks
   // ---------------------------------------------------------------
-  ui.celebrate = (title, sub = 'Great detective work!') => {
+  ui.celebrate = (title, sub = 'Great detective work!', { msg: showMsg = true, dur = 5.4 } = {}) => {
     const cv = document.createElement('canvas'); cv.className = 'celebrate';
     const msg = document.createElement('div'); msg.className = 'celebrate-msg';
     msg.innerHTML = `<b>${esc(title)}</b><span>${esc(sub)}</span>`;
-    document.body.append(cv, msg);
+    document.body.append(cv); if (showMsg) document.body.append(msg);
     const dpr = Math.min(2, window.devicePixelRatio || 1), W = innerWidth, H = innerHeight;
     cv.width = W * dpr; cv.height = H * dpr;
     const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
@@ -341,9 +341,9 @@ export function createUI(api) {
     const n = Math.round(Math.min(260, W * H / 4500));
     for (let i = 0; i < n; i++) conf.push({ x: R(0, W), y: R(-H * 0.9, -10), vx: R(-50, 50), vy: R(140, 280), r: R(0, 6.28), vr: R(-7, 7), w: R(6, 11), h: R(10, 17), c: COLORS[i % COLORS.length], ph: R(0, 6.28) });
     const sparks = [];
-    const bursts = [0.15, 0.6, 1.0, 1.45, 1.9, 2.4, 2.9].map(t => ({ t, x: R(W * 0.15, W * 0.85), y: R(H * 0.12, H * 0.5), c: COLORS[Math.floor(R(0, COLORS.length))], done: false }));
+    const bursts = [0.15, 0.6, 1.0, 1.45, 1.9, 2.4, 2.9, 3.5, 4.2, 5.0, 5.8].filter(t => t < dur - 1.5).map(t => ({ t, x: R(W * 0.15, W * 0.85), y: R(H * 0.12, H * 0.5), c: COLORS[Math.floor(R(0, COLORS.length))], done: false }));
     const t0 = performance.now(); let last = t0;
-    const DUR = 5.4;
+    const DUR = dur;
     const step = (now) => {
       const t = (now - t0) / 1000, dt = Math.min(0.05, (now - last) / 1000); last = now;
       ctx.clearRect(0, 0, W, H);

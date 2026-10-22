@@ -43,7 +43,7 @@ export function init(api, ui) {
   function begin(m) {
     closeCard();
     mode = m; reset();
-    if (mode === 'hard') ui.modal({ title: 'Hard Mode!', tone: 'hard', icon: 'rotr', text: P.hardPopup || 'The continents are turned around, and there are no outlines inside Pangaea. To turn a continent, put two fingers on it and twist.', button: 'Play Hard Mode', onOk: startTimer });
+    if (mode === 'hard') ui.modal({ title: 'Hard Mode!', tone: 'hard', icon: 'rotr', text: P.hardPopup || 'The continents are turned around, and there are no outlines inside Pangaea. To turn a continent, put two fingers on it and twist.', button: 'Play Hard Mode', onOk: () => { primeVideo(); startTimer(); } });
     else startTimer();
   }
 
@@ -78,7 +78,11 @@ export function init(api, ui) {
     root.querySelector('[data-p="exit"]').onclick = () => ui.exitActivity();
     root.querySelector('[data-p="all"]').onclick = () => fit(true);
     root.querySelector('[data-p="shelf"]').onclick = () => setShelf(!shelfOn, true);
-    root.querySelector('[data-p="again"]').onclick = () => { closeCard(); reset(); startTimer(); };
+    root.querySelector('[data-p="again"]').onclick = () => {
+      closeCard();
+      if (hardUnlocked()) { stopTimer(); welcome(); }      // ask Easy or Hard Mode every time
+      else { reset(); startTimer(); }
+    };
     root.querySelector('[data-p="help"]').onclick = () => ui.modal({ title: 'How to play', icon: 'question', button: 'OK',
       text: mode === 'hard' ? 'Drag a continent with one finger. To turn it, put two fingers on it and twist. Fit it inside the outline of Pangaea. Pinch the ocean to zoom in, and drag the ocean to move around.'
                             : 'Drag a continent with one finger. Use the faint outlines to find where it goes. Pinch with two fingers to zoom in, and drag the ocean to move around.' });
@@ -436,10 +440,17 @@ export function init(api, ui) {
     say(mode === 'hard' ? 'You beat Hard Mode!' : 'You built Pangaea!');
     fit(true, true);
     pieces.forEach(pc => glow(pc));
-    later(500, () => ui.celebrate(mode === 'hard' ? 'You beat Hard Mode!' : 'You built Pangaea!', `Your time: ${fmtTime(time)}`));
     later(700, () => root.stripes.classList.add('on'));
+    if (mode === 'hard') {   // Hard Mode: confetti and fireworks behind a video from Alfred Wegener
+      later(500, () => { ui.celebrate('', '', { msg: false, dur: 8.5 }); wegenerVideo(() => showWinCard(time, old, newBest)); });
+      return;
+    }
+    later(500, () => ui.celebrate('You built Pangaea!', `Your time: ${fmtTime(time)}`));
     if (unlockNow) later(4100, unlockFlash);
-    later(unlockNow ? 7000 : 3800, () => {
+    later(unlockNow ? 7000 : 3800, () => showWinCard(time, old, newBest));
+  }
+  function showWinCard(time, old, newBest) {
+    {
       const L = (P.legend || []).map(([id, name, col, pat]) => `<div><i style="width:34px;height:12px;border-radius:3px;background:${col};flex:none"></i><span><b>${esc(name)}</b> (${esc(pat)})</span></div>`).join('');
       const playHard = mode === 'easy' && hardUnlocked();
       cardEl = card(`<h2>${mode === 'hard' ? 'You beat Hard Mode!' : 'You built Pangaea!'}</h2>
@@ -457,8 +468,47 @@ export function init(api, ui) {
       fit(true, true);
       cardEl.querySelector('[data-w="hard"]')?.addEventListener('click', () => begin('hard'));
       cardEl.querySelector('[data-w="globe"]').onclick = () => { ui.exitActivity(); setTimeout(() => ui.go('time'), 300); };
-      cardEl.querySelector('[data-w="again"]').onclick = () => begin(mode);
-    });
+      cardEl.querySelector('[data-w="again"]').onclick = () => (hardUnlocked() ? (closeCard(), welcome()) : begin(mode));
+    }
+  }
+
+  // ---------- the Alfred Wegener video (after beating Hard Mode) ----------
+  let vid = null;
+  function getVideo() {
+    if (!vid) {
+      vid = document.createElement('video');
+      vid.poster = 'media/wegener-poster.jpg';
+      vid.innerHTML = '<source src="media/wegener.mp4" type="video/mp4"><source src="media/wegener.webm" type="video/webm">';
+      vid.preload = 'auto'; vid.playsInline = true; vid.setAttribute('playsinline', ''); vid.setAttribute('webkit-playsinline', '');
+    }
+    return vid;
+  }
+  // iPads only play sound if the video was started by a tap once, so "wake it up" during a tap
+  function primeVideo() {
+    const v = getVideo();
+    try { v.muted = false; const pr = v.play(); v.pause(); v.currentTime = 0; if (pr && pr.catch) pr.catch(() => {}); } catch (e) {}
+  }
+  function wegenerVideo(done) {
+    const v = getVideo();
+    const o = document.createElement('div'); o.className = 'wegener';
+    o.innerHTML = `<div class="wg-box"><div class="wg-frame"></div>
+        <b class="wg-title">Alfred Wegener is proud of you!</b>
+        <span class="wg-sub">He was the scientist who first said that the continents move.</span>
+        <div class="wg-btns"><button class="tour-btn" data-v="again">${icon('restart')} Watch again</button><button class="tour-btn primary" data-v="go">Continue →</button></div></div>`;
+    o.querySelector('.wg-frame').appendChild(v);
+    document.body.appendChild(o); root.classList.add('wg-on');
+    const tapBtn = document.createElement('button'); tapBtn.className = 'wg-play'; tapBtn.innerHTML = `${icon('play')}<span>Tap to play</span>`; tapBtn.hidden = true;
+    o.querySelector('.wg-frame').appendChild(tapBtn);
+    const play = () => {
+      v.muted = false; v.currentTime = 0;
+      const pr = v.play();
+      if (pr && pr.catch) pr.catch(() => { tapBtn.hidden = false; });   // the browser wants a tap first
+    };
+    tapBtn.onclick = () => { tapBtn.hidden = true; play(); };
+    v.onended = () => o.classList.add('ended');
+    o.querySelector('[data-v="again"]').onclick = () => { o.classList.remove('ended'); ui.celebrate('', '', { msg: false, dur: 7 }); tapBtn.hidden = true; play(); };
+    o.querySelector('[data-v="go"]').onclick = () => { v.pause(); o.remove(); root.classList.remove('wg-on'); done && done(); };
+    play();
   }
   // a red glowing flash: Hard Mode is unlocked
   function unlockFlash() {
@@ -482,7 +532,8 @@ export function init(api, ui) {
 
   function cleanup() {
     timers.forEach(clearTimeout); timers = []; stopTimer();
-    document.querySelectorAll('.unlock').forEach(u => u.remove());
+    document.querySelectorAll('.unlock, .wegener').forEach(u => u.remove()); root.classList.remove('wg-on');
+    if (vid) { try { vid.pause(); } catch (e) {} }
     if (viewAnim) cancelAnimationFrame(viewAnim); viewAnim = null;
     if (edgeRAF) cancelAnimationFrame(edgeRAF); edgeRAF = null;
     closeCard(); ui.closeModal();
