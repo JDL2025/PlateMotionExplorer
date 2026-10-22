@@ -8,11 +8,10 @@ Made for iPads (Safari, iPadOS 15 or newer). It also works on computers.
 
 | Menu button | What it does |
 |---|---|
-| **Fossil Match** | Tap matching fossils (Mesosaurus, Glossopteris, Lystrosaurus, Cynognathus) on different continents. When all the places for one fossil are found, the continents slide back to where they were when it lived. Then a card opens with photos, short facts, and "The evidence." After all four, confetti and fireworks fill the screen, and students can see all the fossils together on Gondwana. Once all four are matched, the game starts fresh the next time it's opened. If students leave before finishing, their matches are kept. |
-| **Rock Match** | The same idea with matching mountains (Appalachians, Greenland, Scotland, Norway, Morocco) and matching 2-billion-year-old rocks (Brazil and Ghana). |
-| **Time Machine** | A timeline from 300 million years ago to today. Tap **Play**, drag the round button, or tap a date to read about it. The view is tilted toward the South Pole, and the little fossil pictures ride along with their continents. |
-| **Puzzle** | The Pangaea Puzzle on a flat map. The pieces start away from their real spots. **Easy**: pieces are already turned the right way and there are outlines. **Challenge**: pieces start turned the way they are on today's map, students turn them with two fingers (or the Turn buttons), and there are no outlines. **Shelves** shows the continental shelves (a short note pops up to explain them); the continents fit even better with them. Each continent glows its own color when it snaps into place. When it's solved, colored fossil stripes appear and line up across the pieces. |
-| **Whole Earth** | Back to the start. |
+| **Fossil Match** | A pop-up says "Match the fossils to see how Ancient Earth's continents used to be arranged," and students tap **Let's Play**. Then they tap matching fossils (Mesosaurus, Glossopteris, Lystrosaurus, Cynognathus) on different continents. When all the places for one fossil are found, the continents slide back to where they were when it lived, and a card opens with photos, short facts, and "The evidence." After the last match, confetti and fireworks play first, then the card, then students can see all the fossils together. Matches stay green with a check mark if students leave and come back. After all four are matched, the game starts fresh the next time. |
+| **Rock Match** | The same idea with three kinds of rock evidence: matching mountains (Appalachians, Greenland, Scotland, Norway, Morocco), matching 2-billion-year-old rocks (Brazil and Ghana), and matching glacier scratches from a giant ice sheet about 300 million years ago (Brazil, South Africa, India, Australia, Antarctica). |
+| **Time Machine** | A pop-up welcomes students; they tap **Use the Time Machine**. Then they tap **Play**, drag the round button, or tap a date to read about it. A few seconds after Play starts, a note reminds them they can spin the globe. The view is tilted toward the South Pole, and the little fossil pictures ride along with their continents. |
+| **Puzzle** | The Pangaea Puzzle on a flat map. A pop-up asks "Can you recreate Pangaea?" and students tap **Play the puzzle**. They drag the continents onto the faint outlines. **Pinch** (or tap **Zoom in**/**Zoom out**) to zoom, drag the ocean to move around, and tap **See all** to see everything again. Each continent glows its own color when it snaps into place. **Shelves** shows the continental shelves, with a short explanation box (tap **OK**). When it's solved, confetti plays and colored fossil stripes appear and line up across the pieces. |
 | **Show** | Continent names, continental shelves, lines of latitude, help, and credits. |
 
 Every card and help box has a **Read to me** button. It uses the iPad's built-in voice, so it works without extra apps. (Turn the iPad's volume up. On some iPads the side switch must not be on silent.)
@@ -39,10 +38,10 @@ You can edit these on GitHub with the pencil icon. Each one has notes at the top
 
 | To change… | Edit this file |
 |---|---|
-| Fossil names, places, facts, bullets, photos | `js/data/fossils.js` |
+| Fossil names, places, facts, bullets, photos, and the pop-up words | `js/data/fossils.js` |
 | Mountain and rock matches | `js/data/rocks.js` |
 | Time Machine stops and words | `js/data/timemachine.js` |
-| Puzzle starting spots (`sx`, `sy`) | `js/data/puzzle.js` |
+| Puzzle starting spots (`sx`, `sy` wide screen; `px`, `py` tall screen) | `js/data/puzzle.js` |
 | Colors and sizes | `css/app.css` |
 
 Photos live in the `photos/` folder. The small round pictures on the globe are in `photos/thumbs/`.

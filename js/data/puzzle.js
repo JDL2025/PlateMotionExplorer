@@ -6,8 +6,9 @@
      img       pictures in data/puzzle/ (land and continental shelf)
      x, y      where the picture's top-left corner goes when solved (board pixels)
      cx, cy    the middle of the piece when solved
-     sx, sy    where the piece starts (away from its real spot, to make it a puzzle!)
-     todayDeg  how much the piece is turned on today's map (Challenge level)
+     sx, sy    where the piece starts on a wide (landscape) screen
+     px, py    where the piece starts on a tall (portrait) screen
+   popup / button   the pop-up box students see when the puzzle starts
    You can move a starting spot by changing sx and sy.
    ===================================================================== */
 window.PUZZLE = {
@@ -34,8 +35,7 @@ window.PUZZLE = {
    "lat": 9.75,
    "lon": 21.4,
    "sx": 110.4,
-   "sy": 125.3,
-   "todayDeg": 3.0
+   "sy": 125.3
   },
   {
    "id": "MG",
@@ -49,9 +49,10 @@ window.PUZZLE = {
    "northDeg": 0.1,
    "lat": -19.45,
    "lon": 46.86,
-   "sx": -820,
-   "sy": 960,
-   "todayDeg": -0.1
+   "sx": -800,
+   "sy": 900,
+   "px": 1100,
+   "py": -250
   },
   {
    "id": "IN",
@@ -65,9 +66,10 @@ window.PUZZLE = {
    "northDeg": 35.4,
    "lat": 24.1,
    "lon": 79.02,
-   "sx": -1150,
-   "sy": -720,
-   "todayDeg": -35.4
+   "sx": -1000,
+   "sy": 150,
+   "px": -950,
+   "py": -100
   },
   {
    "id": "AN",
@@ -81,9 +83,10 @@ window.PUZZLE = {
    "northDeg": 28.4,
    "lat": -87.32,
    "lon": 77.94,
-   "sx": -1120,
-   "sy": 760,
-   "todayDeg": -28.4
+   "sx": -1150,
+   "sy": 650,
+   "px": -1050,
+   "py": 450
   },
   {
    "id": "AU",
@@ -97,9 +100,10 @@ window.PUZZLE = {
    "northDeg": 39.5,
    "lat": -24.7,
    "lon": 135.16,
-   "sx": -1260,
-   "sy": 40,
-   "todayDeg": -39.5
+   "sx": -1000,
+   "sy": -450,
+   "px": -1000,
+   "py": -650
   },
   {
    "id": "SA",
@@ -113,9 +117,10 @@ window.PUZZLE = {
    "northDeg": -39.5,
    "lat": -15.6,
    "lon": -60.48,
-   "sx": 1420,
-   "sy": -620,
-   "todayDeg": 39.5
+   "sx": 1900,
+   "sy": 560,
+   "px": 1250,
+   "py": 350
   },
   {
    "id": "NA",
@@ -129,9 +134,10 @@ window.PUZZLE = {
    "northDeg": 1.7,
    "lat": 55.15,
    "lon": -101.6,
-   "sx": 1460,
-   "sy": 180,
-   "todayDeg": -1.7
+   "sx": 1220,
+   "sy": 560,
+   "px": 100,
+   "py": 1150
   },
   {
    "id": "GR",
@@ -145,9 +151,10 @@ window.PUZZLE = {
    "northDeg": -35.4,
    "lat": 74.81,
    "lon": -41.4,
-   "sx": 1260,
-   "sy": 860,
-   "todayDeg": 35.4
+   "sx": -1000,
+   "sy": -1000,
+   "px": 1150,
+   "py": -700
   },
   {
    "id": "EU",
@@ -161,9 +168,10 @@ window.PUZZLE = {
    "northDeg": -124.9,
    "lat": 58.86,
    "lon": 83.28,
-   "sx": 760,
-   "sy": -1330,
-   "todayDeg": 124.9
+   "sx": 1500,
+   "sy": -560,
+   "px": 150,
+   "py": -1650
   }
  ],
  "legend": [
@@ -191,5 +199,7 @@ window.PUZZLE = {
    "#ff8f7a",
    "up-and-down stripes"
   ]
- ]
+ ],
+ "popup": "Drag the continents to their correct location to see if you can recreate ancient Earth.",
+ "button": "Play the puzzle"
 };

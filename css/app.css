@@ -575,6 +575,7 @@ button:focus-visible, input:focus-visible + span { outline: 3px solid var(--suns
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
 }
 .pz-bar .dock-btn { min-width: 74px; }
+@media (max-width: 760px) { .pz-bar .dock-btn { min-width: 0; padding: 4px 6px; font-size: 12.5px; } }
 .pz-bar .dock-btn[aria-pressed="true"] { background: var(--sunset); color: var(--dusk); }
 .pz-bar .dock-btn:disabled { opacity: .35; }
 .pz-card {
@@ -643,3 +644,34 @@ button:focus-visible, input:focus-visible + span { outline: 3px solid var(--suns
 .pz-tip-ico { width: 34px; height: 34px; border-radius: 10px; margin-top: 2px; background: linear-gradient(135deg, #46a0d8, #8fd0f5); box-shadow: inset 0 0 0 2px rgba(170,225,255,.9); }
 .pz-tip b { font-family: var(--display); font-size: 22px; color: var(--sunset); }
 .pz-tip p { margin: 2px 0 0; font-size: 16px; line-height: 1.4; }
+
+/* ---------- pop-up box in the middle of the screen ---------- */
+.modal-back { position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(4,6,10,.55); animation: fadeIn .2s ease-out; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal {
+  position: relative; width: min(520px, 100%); padding: 26px 26px 22px; border-radius: 26px; text-align: center;
+  background: var(--glass); border: 1px solid rgba(233,180,124,.55);
+  backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); box-shadow: 0 24px 60px rgba(0,0,0,.6);
+  animation: popIn .3s cubic-bezier(.2,.9,.3,1.2);
+}
+@keyframes popIn { from { transform: scale(.85); opacity: 0; } to { transform: none; opacity: 1; } }
+.modal-say { position: absolute; top: 12px; right: 12px; }
+.modal-ico { width: 64px; height: 64px; margin: 18px auto 8px; border-radius: 20px; display: flex; align-items: center; justify-content: center; background: var(--butterscotch); }
+.modal-ico svg { width: 38px; height: 38px; fill: none; stroke: var(--dusk); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.modal h2 { font-family: var(--display); font-weight: 800; font-size: 40px; line-height: 1; margin: 10px 0 10px; }
+.modal .lead { font-size: 21px; line-height: 1.45; margin: 0 0 20px; }
+.modal-ok { min-height: 60px; min-width: 220px; padding: 0 28px; border: 0; border-radius: 18px; background: var(--butterscotch); color: var(--dusk); font-weight: 800; font-size: 21px; cursor: pointer; box-shadow: 0 8px 22px rgba(233,180,124,.35); }
+.modal-ok:active { filter: brightness(.9); }
+
+/* "you can spin the globe" note during Play */
+.side-tip {
+  position: fixed; z-index: 23; right: calc(20px + var(--safe-r)); top: 42%; transform: translateY(-50%);
+  width: min(270px, 40vw); padding: 14px 16px; border-radius: 18px; display: grid; grid-template-columns: 40px 1fr; gap: 10px; align-items: center;
+  background: var(--glass); border: 1px solid rgba(140,196,240,.6); box-shadow: 0 14px 36px rgba(0,0,0,.5);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); font-weight: 700; font-size: 17px; line-height: 1.35;
+  animation: tipIn .4s ease-out;
+}
+.side-tip .g-icon { font-size: 34px; text-align: center; animation: tipWiggle 1.6s ease-in-out infinite; }
+@keyframes tipIn { from { opacity: 0; transform: translate(20px, -50%); } to { opacity: 1; transform: translateY(-50%); } }
+@keyframes tipWiggle { 0%,100% { transform: translateX(-4px); } 50% { transform: translateX(6px); } }
+@media (orientation: portrait) and (max-width: 900px) { .side-tip { top: calc(150px + var(--safe-t)); transform: none; width: min(300px, 60vw); animation: none; } }

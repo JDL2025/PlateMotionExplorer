@@ -30,33 +30,34 @@ export function createMatch(api, ui, DATA, opt) {
 
   // ---------------------------------------------------------------
   function start() {
-    if (on) { ui.closeCard(); intro(); return; }
+    if (on) { ui.closeCard(); popup(); return; }
     ui.closeCard();
     ui.startActivity({
       id: opt.id, title: opt.title,
       extra: `<span class="match-progress" id="mp-${opt.id}"><b>0</b>&nbsp;of ${sets.length} matched</span>`,
-      buttons: [{ label: 'Help', icon: 'question', onClick: () => intro() }],
+      buttons: [{ label: 'Help', icon: 'question', onClick: () => help() }],
       onStop: cleanup
     });
     on = true; busy = false;
     api.setTime(0, null); api.setDim(null);
     api.home(1000);
     buildPins(); buildLines();
+    pinClasses();          // matches from last time stay green with a check mark
     updateProgress();
     ui.setHud(`Tap a ${noun} picture, then find its match on another continent.`);
-    intro();
+    popup();
   }
 
-  function intro() {
+  // the pop-up box students see first
+  function popup() {
     const I = DATA.intro || {};
-    const list = sets.map(s => `<div><img src="${esc(s.thumb)}" alt="" onerror="this.style.visibility='hidden'"><span><b>${esc(s.name)}</b>: found in ${s.sites.length} places${done.has(sets.indexOf(s)) ? ' ✓' : ''}</span></div>`).join('');
-    const h = `<h2>${esc(I.title || opt.title)}</h2><p class="lead">${esc(I.lead || '')}</p>
-      ${ui.part.steps(I.steps)}
-      <h3 class="sec">What to find</h3><div class="legend">${list}</div>
-      <div class="actions"><button class="act primary" data-m="go">${icon('match')}<span>Start matching</span></button></div>`;
-    const c = ui.showCard(h, { badge: opt.title, badgeColor: '#e9b47c', badgeIcon: opt.badgeIcon, id: opt.id + '-intro' });
-    c.querySelector('[data-m="go"]').onclick = () => ui.closeCard();
+    ui.modal({ title: opt.title, text: I.popup || I.lead || '', button: I.button || 'Let’s Play', icon: opt.badgeIcon });
   }
+  function help() {
+    ui.modal({ title: 'How to play', text: `Tap a ${noun} picture. Then find the same ${noun} on another continent and tap it. A green check mark means you already matched it.`, button: 'OK', icon: 'question' });
+  }
+
+
 
   // ---------------------------------------------------------------
   // Pins (round pictures on the globe)
@@ -250,6 +251,14 @@ export function createMatch(api, ui, DATA, opt) {
         const pts = s.sites.map(site => api.project(api.siteWorld(site, 1)));
         const cx = pts.reduce((a, p) => a + p.x, 0) / pts.length, cy = pts.reduce((a, p) => a + p.y, 0) / pts.length;
         ui.burst(cx, cy, true);
+        if (done.size === sets.length) {
+          // the last match: celebrate first, then show the card
+          finaleShown = true;
+          ui.banner(null);
+          ui.celebrate(`You matched all ${sets.length}!`);
+          later(4300, () => { busy = false; openCard(si, true, true); });
+          return;
+        }
         ui.banner(`<b>They fit together!</b><small>This is where the continents were about ${s.age} million years ago.</small>`);
         later(1500, () => { busy = false; openCard(si, true); });
       });
@@ -276,7 +285,7 @@ export function createMatch(api, ui, DATA, opt) {
   // ---------------------------------------------------------------
   // Cards
   // ---------------------------------------------------------------
-  function openCard(si, afterMatch) {
+  function openCard(si, afterMatch, last) {
     const s = sets[si];
     const facts = s.facts || [['Lived', s.lived], ['Size', s.size], ['Found in', s.found]];
     const h = `<h2>${esc(s.name)}</h2><p class="short">${esc(s.short)}</p>
@@ -287,11 +296,13 @@ export function createMatch(api, ui, DATA, opt) {
       ${ui.part.evidence(s.evidence)}
       <div class="actions">
         <button class="act" data-m="replay">${icon('restart')}<span>Watch the continents move again</span></button>
-        <button class="act primary" data-m="back">${icon('globe')}<span>${afterMatch ? 'Back to today, find the next match' : 'Close'}</span></button>
+        ${last ? `<button class="act primary" data-m="all">${icon('globe')}<span>${noun === 'fossil' ? 'See all the fossils together' : 'See all the rocks together'}<small>The continents move back to how they were joined</small></span></button>`
+               : `<button class="act primary" data-m="back">${icon('globe')}<span>${afterMatch ? 'Back to today, find the next match' : 'Close'}</span></button>`}
       </div>`;
     const c = ui.showCard(h, { badge: `${opt.title} ✓`, badgeColor: s.color, badgeIcon: opt.badgeIcon, id: s.id,
       onClose: (replaced) => { if (!on) return; if (!replaced) backToToday(checkFinale); else if (api.time > 0.5) backToToday(); } });
-    c.querySelector('[data-m="back"]').onclick = () => ui.closeCard();
+    c.querySelector('[data-m="back"]')?.addEventListener('click', () => ui.closeCard());
+    c.querySelector('[data-m="all"]')?.addEventListener('click', () => showAll());
     c.querySelector('[data-m="replay"]').onclick = () => replay(si);
   }
   function replay(si) {
@@ -304,7 +315,7 @@ export function createMatch(api, ui, DATA, opt) {
       cancels.push(api.setDim(gi => involved(si, gi) ? 0 : 0.85, 800));
       later(1000, () => animateTo([si], s.age, 5200, 'Going back in time', () => {
         ui.banner(`<b>They fit together!</b><small>About ${s.age} million years ago.</small>`, 3000);
-        later(1200, () => { busy = false; openCard(si, true); });
+        later(1200, () => { busy = false; openCard(si, true, done.size === sets.length); });
       }));
     };
     if (api.time > 0.5) backToToday(go); else go();

@@ -10,6 +10,8 @@
    ===================================================================== */
 window.TIME_MACHINE = {
   intro: {
+    popup: 'Here you can replay ancient Earth’s history to see how the continents have moved.',
+    button: 'Use the Time Machine',
     title: 'Time Machine',
     lead: 'The continents are always moving, very slowly. Let’s go back 300 million years and watch!',
     steps: [

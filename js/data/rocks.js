@@ -8,6 +8,8 @@
    ===================================================================== */
 window.ROCKS = {
   intro: {
+    popup: 'Geologists can match rock formations across different continents to prove continental drift. See if you can match the rock evidence!',
+    button: 'Let’s Play',
     title: 'Rock Match',
     lead: 'Rocks and mountains can match across an ocean too, like pieces of a torn page.',
     steps: [
@@ -101,6 +103,63 @@ window.ROCKS = {
         ["photos/oldrocks-2.jpg", "Big granite rocks in Ghana, West Africa.", "Source: tortoisepath.com"],
         ["photos/oldrocks-3.jpg", "Layers of old rock on the coast of Ghana.", "Source: twitter.com"]
       ]
+    },
+    {
+      id: 'glaciers',
+      name: 'Matching Glacier Scratches',
+      kind: 'Rocks scratched by ice',
+      color: '#9fe3ff',
+      lineColor: '#9fe3ff',
+      age: 300,
+      thumb: 'photos/thumbs/glaciers.jpg',
+      short: 'Rocks scratched by the same giant ice sheet, on five continents.',
+      sites: [
+        { place: 'Brazil', lat: -23.3, lon: -47.3, dx: -72, dy: 20 },
+        { place: 'South Africa', lat: -28.7, lon: 24.7, dx: 68, dy: 26 },
+        { place: 'India', lat: 20.9, lon: 85.2, dx: 66, dy: 30 },
+        { place: 'Australia', lat: -35.1, lon: 138.5, dx: -66, dy: 30 },
+        { place: 'Antarctica', lat: -84.5, lon: 166.0, dx: 64, dy: -36 }
+      ],
+      loops: [
+        { lat: -23.3, lon: -47.3, r: 2.4 },
+        { lat: -28.7, lon: 24.7, r: 2.4 },
+        { lat: 20.9, lon: 85.2, r: 2.0 },
+        { lat: -35.1, lon: 138.5, r: 2.0 },
+        { lat: -84.5, lon: 166.0, r: 2.2 }
+      ],
+      facts: [
+        ['Ice age', 'About 300 million years ago'],
+        ['Found in', 'South America, Africa, India, Australia, Antarctica'],
+        ['Today', 'Some of these places are hot!']
+      ],
+      bullets: [
+        'Glaciers are giant, slow rivers of ice. As they slide, stones stuck in the ice scratch the rock below.',
+        'About 300 million years ago, there was a huge ice age.',
+        'Scientists found glacier scratches and glacier rocks in South America, Africa, India, Australia, and Antarctica.',
+        'Some of these places, like India and Africa, are too hot for glaciers today.',
+        'When the continents are put back together, the scratches line up. They show one giant ice sheet near the South Pole.'
+      ],
+      compare: 'It is like finding the same muddy footprints in five different rooms. They make sense only if the rooms were once one big room.',
+      evidence: 'Rocks scratched by the same ice sheet are found on five continents, even hot ones. This is evidence that South America, Africa, India, Australia, and Antarctica were once joined near the South Pole, and that the continents have moved over time.',
+      photos: [
+        ["photos/glaciers-1.jpg", "Rock scratched by a glacier at Hallett Cove, Australia. The scratches show which way the ice moved.", "Source: walkaboutadelaide.com"],
+        ["photos/glaciers-2.jpg", "Students exploring smooth, scratched rock left by glaciers in South Africa.", "Source: safieldschool.blogspot.com"],
+        ["photos/glaciers-3.jpg", "Tillite: a rock made of the mud and stones a glacier left behind.", "Source: geodil.dperkins.org"],
+        ["photos/glaciers-4.jpg", "One giant ice sheet covered the southern part of Pangaea. The arrows show which way the ice moved.", "Source: wallpapercave.com"],
+        ["photos/glaciers-5.jpg", "Glaciers today leave the same kind of scratches on rock.", "Source: curiousdon.com"]
+      ]
     }
-  ]
+  ],
+  finale: {
+    title: 'All the Rock Evidence',
+    age: 270,
+    lead: 'You matched all the rock evidence! Here it is together, with the continents put back the way they were.',
+    bullets: [
+      'The mountain chains line up into one long chain.',
+      'The very old rocks of Brazil and Ghana sit side by side.',
+      'The glacier scratches meet around one giant ice sheet near the South Pole.',
+      'Rocks and fossils tell the same story: the continents were once joined.'
+    ],
+    evidence: 'Matching mountains, matching old rocks, and matching glacier scratches are evidence that the continents were once joined, and that they have moved over time.'
+  }
 };

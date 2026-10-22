@@ -14,9 +14,12 @@
      bullets   short sentences (keep them short and simple!)
      evidence  the "Evidence" box at the bottom of the card
      photos    the slideshow: [picture file, caption, credit]
+   intro.popup / intro.button   the pop-up box students see when the game starts
    ===================================================================== */
 window.FOSSILS = {
   intro: {
+    popup: 'Match the fossils to see how Ancient Earth’s continents used to be arranged.',
+    button: 'Let’s Play',
     title: 'Fossil Match',
     lead: 'Scientists found the same fossils on continents that are now far apart. Can you find the matches?',
     steps: [

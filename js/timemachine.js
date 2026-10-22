@@ -26,12 +26,30 @@ export function init(api, ui) {
     api.setGrid(true);
     api.setDim(null);
     if (api.anchor !== null) api.setTime(api.time, null);
-    buildBar(); buildMarkers();
+    buildBar(); buildMarkers(); tipShown = false;
     ui.setHud('Watch the continents move over 300 million years.');
-    ui.banner(`<b>Traveling back ${MAX} million years…</b>`);
-    lookAtPangaea(MAX, 1800);
-    travelTo(MAX, 2600, () => { ui.banner(null); intro(); });
+    readout(api.time);
+    welcome(() => {
+      ui.banner(`<b>Traveling back ${MAX} million years…</b>`);
+      lookAtPangaea(MAX, 1800);
+      travelTo(MAX, 2600, () => ui.banner('<b>Ready!</b> Tap <b>Play</b> at the bottom to watch the continents move.', 5000));
+    });
   }
+  function welcome(after) {
+    ui.modal({ title: 'Welcome to the Time Machine!', text: TM.intro.popup || 'Here you can replay ancient Earth’s history to see how the continents have moved.',
+      button: TM.intro.button || 'Use the Time Machine', icon: 'hourglass', onOk: after });
+  }
+  // a short note: you can spin the globe while it plays
+  let tipShown = false, tipEl = null;
+  function spinTip() {
+    if (tipShown || !on) return;
+    tipShown = true;
+    tipEl = document.createElement('div'); tipEl.className = 'side-tip';
+    tipEl.innerHTML = '<span class="g-icon" aria-hidden="true">☝️</span><span>Spin the globe with your finger to see the continents moving from every side!</span>';
+    document.body.appendChild(tipEl);
+    later(10000, hideTip);
+  }
+  function hideTip() { if (tipEl) { tipEl.remove(); tipEl = null; } }
   function lookAtPangaea(t, ms) {
     const q = api.groupQuatAt(api.groupAt(5, 20), t, null);
     const v = api.latLonToLocal(5, 0).applyQuaternion(q);
@@ -57,10 +75,12 @@ export function init(api, ui) {
   let playTimer = null, lastFrame = 0, holdUntil = 0;
   function play() {
     if (playing) { pause(); return; }
-    ui.closeCard();
+    ui.closeCard(); ui.banner(null);
+    cancels.forEach(f => f()); cancels = [];
     if (api.time < 0.5) setT(MAX);
     playing = true; updatePlayBtn();
     lastFrame = performance.now(); holdUntil = 0;
+    later(3000, () => { if (playing) spinTip(); });
     const step = (now) => {
       if (!playing) return;
       const dt = Math.min(0.25, (now - lastFrame) / 1000); lastFrame = now;
@@ -96,7 +116,7 @@ export function init(api, ui) {
     document.body.appendChild(bar);
     bar.querySelector('[data-t="exit"]').onclick = () => ui.exitActivity();
     bar.querySelector('[data-t="play"]').onclick = () => play();
-    bar.querySelector('[data-t="info"]').onclick = () => (idx < 0 ? intro() : openStop(idx));
+    bar.querySelector('[data-t="info"]').onclick = () => (idx < 0 ? welcome() : openStop(idx));
     bar.querySelectorAll('[data-s]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); pause(); openStop(+b.dataset.s); }));
     // drag along the timeline
     const track = bar.querySelector('.tm-track');
@@ -164,17 +184,6 @@ export function init(api, ui) {
   }
 
   // ---------- cards ----------
-  function intro() {
-    idx = -1; updateBar(api.time);
-    const h = `<h2>${esc(TM.intro.title)}</h2><p class="lead">${esc(TM.intro.lead)}</p>
-      ${ui.part.steps(TM.intro.steps)}
-      <p class="note say">The yellow line is the equator. The little round pictures are the fossils from Fossil Match.</p>
-      <div class="actions"><button class="act primary" data-tm="play">${icon('play')}<span>Play</span></button>
-      <button class="act" data-tm="first">${icon('next')}<span>Go stop by stop</span></button></div>`;
-    const c = ui.showCard(h, { badge: 'Time Machine', badgeColor: '#8cc4f0', badgeIcon: 'hourglass', id: 'tm-intro' });
-    c.querySelector('[data-tm="play"]').onclick = () => play();
-    c.querySelector('[data-tm="first"]').onclick = () => openStop(0);
-  }
   function openStop(i, noTravel) {
     pause();
     idx = i;
@@ -199,6 +208,7 @@ export function init(api, ui) {
     timers.forEach(clearTimeout); timers = [];
     cancels.forEach(f => f()); cancels = [];
     if (bar) { bar.remove(); bar = null; }
+    hideTip();
     clearMarkers();
     api.setGrid(gridWas);
   }

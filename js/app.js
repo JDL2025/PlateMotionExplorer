@@ -94,7 +94,8 @@ export function createUI(api) {
     const from = api.time, anchor = api.anchor;
     api.tween(ms, t => api.setTime(from * (1 - api.ease(t)), anchor), () => api.setTime(0, null));
   };
-  $('#homeBtn').onclick = () => {
+  const homeBtn = $('#homeBtn');
+  if (homeBtn) homeBtn.onclick = () => {
     stopActivity(); closeCard(); closePanels(null);
     api.setDim(null); ui.backToToday(); api.home();
   };
@@ -286,7 +287,7 @@ export function createUI(api) {
     api.requestRender();
   }
   ui.stopActivity = stopActivity;
-  ui.exitActivity = () => { stopActivity(); closeCard(); api.setDim(null); ui.backToToday(); api.home(); };
+  ui.exitActivity = () => { ui.closeModal(); stopActivity(); closeCard(); api.setDim(null); ui.backToToday(); api.home(); };
   ui.activity = () => activity;
 
   // ---------------------------------------------------------------
@@ -300,6 +301,27 @@ export function createUI(api) {
     b.innerHTML = h; document.body.appendChild(b);
     setTimeout(() => b.remove(), 1600);
   };
+
+  // ---------------------------------------------------------------
+  // Pop-up box in the middle of the screen (students tap the button to close it)
+  // ---------------------------------------------------------------
+  let modalEl = null;
+  ui.modal = ({ title = '', text = '', button = 'OK', icon: ic = '', onOk = null } = {}) => {
+    ui.closeModal();
+    speech.stop();
+    const m = document.createElement('div'); m.className = 'modal-back';
+    m.innerHTML = `<div class="modal" role="dialog" aria-modal="true">
+        ${speech.ok ? `<button class="say-btn small modal-say"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg><span>Read to me</span></button>` : ''}
+        ${ic ? `<div class="modal-ico">${icon(ic)}</div>` : ''}
+        <div class="modal-body">${title ? `<h2>${esc(title)}</h2>` : ''}<p class="lead">${esc(text)}</p></div>
+        <button class="modal-ok">${esc(button)}</button>
+      </div>`;
+    document.body.appendChild(m); modalEl = m;
+    const sb = m.querySelector('.modal-say'); if (sb) sb.onclick = () => speech.read(m.querySelector('.modal-body'), sb);
+    m.querySelector('.modal-ok').onclick = () => { ui.closeModal(); onOk && onOk(); };
+    return m;
+  };
+  ui.closeModal = () => { if (modalEl) { speech.stop(); modalEl.remove(); modalEl = null; } };
 
   // ---------------------------------------------------------------
   // Full-screen celebration: confetti and fireworks
