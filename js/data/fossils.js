@@ -29,6 +29,8 @@ window.FOSSILS = {
       'When you find all the matches, watch the continents move!'
     ]
   },
+  // the video that plays after the celebration (files in the media folder)
+  finaleVideo: { name: 'lystrosaurus', title: 'You’re a fossil expert!', sub: 'Lystrosaurus is cheering for you!' },
   sets: [
     {
       id: 'mesosaurus',

@@ -27,7 +27,7 @@ export function createSpeech() {
       .replace(/½/g, ' and a half').replace(/(\d+) M\b/g, '$1 million years ago').replace(/✓|→|←/g, '')
       .trim();
   }
-  function setBtn(on) { if (btn) { btn.classList.toggle('on', on); const s = btn.querySelector('span'); if (s) s.textContent = on ? 'Stop reading' : 'Read to me'; } }
+  function setBtn(on) { if (api.onChange) try { api.onChange(on); } catch (e) {} if (btn) { btn.classList.toggle('on', on); const s = btn.querySelector('span'); if (s) s.textContent = on ? 'Stop reading' : 'Read to me'; } }
   function light(el) { if (lit) lit.classList.remove('saying'); lit = el; if (el) { el.classList.add('saying'); try { el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) {} } }
 
   function stop() {
@@ -68,5 +68,6 @@ export function createSpeech() {
     running = true; setBtn(true);
     if (wasRunning) setTimeout(next, 80); else next();
   }
-  return { ok, read, stop, isOn: () => running };
+  const api = { ok, read, stop, isOn: () => running, onChange: null };
+  return api;
 }

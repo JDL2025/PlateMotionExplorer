@@ -43,7 +43,7 @@ export function init(api, ui) {
   function begin(m) {
     closeCard();
     mode = m; reset();
-    if (mode === 'hard') ui.modal({ title: 'Hard Mode!', tone: 'hard', icon: 'rotr', text: P.hardPopup || 'The continents are turned around, and there are no outlines inside Pangaea. To turn a continent, put two fingers on it and twist.', button: 'Play Hard Mode', onOk: () => { primeVideo(); startTimer(); } });
+    if (mode === 'hard') ui.modal({ title: 'Hard Mode!', tone: 'hard', icon: 'rotr', text: P.hardPopup || 'The continents are turned around, and there are no outlines inside Pangaea. To turn a continent, put two fingers on it and twist.', button: 'Play Hard Mode', onOk: startTimer });
     else startTimer();
   }
 
@@ -473,43 +473,12 @@ export function init(api, ui) {
   }
 
   // ---------- the Alfred Wegener video (after beating Hard Mode) ----------
-  let vid = null;
-  function getVideo() {
-    if (!vid) {
-      vid = document.createElement('video');
-      vid.poster = 'media/wegener-poster.jpg';
-      vid.innerHTML = '<source src="media/wegener.mp4" type="video/mp4"><source src="media/wegener.webm" type="video/webm">';
-      vid.preload = 'auto'; vid.playsInline = true; vid.setAttribute('playsinline', ''); vid.setAttribute('webkit-playsinline', '');
-    }
-    return vid;
-  }
-  // iPads only play sound if the video was started by a tap once, so "wake it up" during a tap
-  function primeVideo() {
-    const v = getVideo();
-    try { v.muted = false; const pr = v.play(); v.pause(); v.currentTime = 0; if (pr && pr.catch) pr.catch(() => {}); } catch (e) {}
-  }
   function wegenerVideo(done) {
-    const v = getVideo();
-    const o = document.createElement('div'); o.className = 'wegener';
-    o.innerHTML = `<div class="wg-box"><div class="wg-frame"></div>
-        <b class="wg-title">Alfred Wegener is proud of you!</b>
-        <span class="wg-sub">He was the scientist who first said that the continents move.</span>
-        <div class="wg-btns"><button class="tour-btn" data-v="again">${icon('restart')} Watch again</button><button class="tour-btn primary" data-v="go">Continue →</button></div></div>`;
-    o.querySelector('.wg-frame').appendChild(v);
-    document.body.appendChild(o); root.classList.add('wg-on');
-    const tapBtn = document.createElement('button'); tapBtn.className = 'wg-play'; tapBtn.innerHTML = `${icon('play')}<span>Tap to play</span>`; tapBtn.hidden = true;
-    o.querySelector('.wg-frame').appendChild(tapBtn);
-    const play = () => {
-      v.muted = false; v.currentTime = 0;
-      const pr = v.play();
-      if (pr && pr.catch) pr.catch(() => { tapBtn.hidden = false; });   // the browser wants a tap first
-    };
-    tapBtn.onclick = () => { tapBtn.hidden = true; play(); };
-    v.onended = () => o.classList.add('ended');
-    o.querySelector('[data-v="again"]').onclick = () => { o.classList.remove('ended'); ui.celebrate('', '', { msg: false, dur: 7 }); tapBtn.hidden = true; play(); };
-    o.querySelector('[data-v="go"]').onclick = () => { v.pause(); o.remove(); root.classList.remove('wg-on'); done && done(); };
-    play();
+    root.classList.add('wg-on');
+    ui.playVideo({ name: 'wegener', title: 'Alfred Wegener is proud of you!', sub: 'He was the scientist who first said that the continents move.',
+      onDone: () => { root.classList.remove('wg-on'); done && done(); } });
   }
+
   // a red glowing flash: Hard Mode is unlocked
   function unlockFlash() {
     const u = document.createElement('div'); u.className = 'unlock';
@@ -532,8 +501,7 @@ export function init(api, ui) {
 
   function cleanup() {
     timers.forEach(clearTimeout); timers = []; stopTimer();
-    document.querySelectorAll('.unlock, .wegener').forEach(u => u.remove()); root.classList.remove('wg-on');
-    if (vid) { try { vid.pause(); } catch (e) {} }
+    document.querySelectorAll('.unlock').forEach(u => u.remove()); ui.closeVideo(); root.classList.remove('wg-on');
     if (viewAnim) cancelAnimationFrame(viewAnim); viewAnim = null;
     if (edgeRAF) cancelAnimationFrame(edgeRAF); edgeRAF = null;
     closeCard(); ui.closeModal();

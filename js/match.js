@@ -255,8 +255,10 @@ export function createMatch(api, ui, DATA, opt) {
           // the last match: celebrate first, then show the card
           finaleShown = true;
           ui.banner(null);
-          ui.celebrate(`You matched all ${sets.length}!`);
-          later(4300, () => { busy = false; openCard(si, true, true); });
+          const V = DATA.finaleVideo;
+          ui.celebrate(`You matched all ${sets.length}!`, 'Great detective work!', { dur: V ? 9 : 5.4 });
+          if (V) later(3700, () => { if (on) ui.playVideo({ name: V.name, title: V.title, sub: V.sub, onDone: () => { busy = false; openCard(si, true, true); } }); });
+          else later(4300, () => { busy = false; openCard(si, true, true); });
           return;
         }
         ui.banner(`<b>They fit together!</b><small>This is where the continents were about ${s.age} million years ago.</small>`);

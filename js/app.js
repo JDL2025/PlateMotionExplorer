@@ -287,7 +287,7 @@ export function createUI(api) {
     api.requestRender();
   }
   ui.stopActivity = stopActivity;
-  ui.exitActivity = () => { ui.closeModal(); stopActivity(); closeCard(); api.setDim(null); ui.backToToday(); api.home(); };
+  ui.exitActivity = () => { ui.closeModal(); ui.closeVideo(); stopActivity(); closeCard(); api.setDim(null); ui.backToToday(); api.home(); };
   ui.activity = () => activity;
 
   // ---------------------------------------------------------------
@@ -378,6 +378,96 @@ export function createUI(api) {
   };
 
   // ---------------------------------------------------------------
+  // A short celebration video in a glowing frame (with sound)
+  //   name = file name in media/ (name.mp4 for iPads, name.webm backup, name-poster.jpg)
+  // ---------------------------------------------------------------
+  const vids = {};
+  function getVid(name) {
+    if (!vids[name]) {
+      const v = document.createElement('video');
+      v.poster = `media/${name}-poster.jpg`; v.preload = 'auto'; v.playsInline = true;
+      v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
+      v.innerHTML = `<source src="media/${name}.mp4" type="video/mp4"><source src="media/${name}.webm" type="video/webm">`;
+      vids[name] = v;
+    }
+    return vids[name];
+  }
+  // iPads only play sound if the video was started by a tap once, so call this during a tap
+  ui.primeVideo = () => {};   // (not needed: videos wait for a tap)
+  ui.playVideo = ({ name, title = '', sub = '', onDone = null }) => {
+    const v = getVid(name);
+    const o = document.createElement('div'); o.className = 'wegener';
+    o.innerHTML = `<div class="wg-box"><div class="wg-frame"></div>
+        ${title ? `<b class="wg-title">${esc(title)}</b>` : ''}${sub ? `<span class="wg-sub">${esc(sub)}</span>` : ''}
+        <div class="wg-btns"><button class="tour-btn" data-v="again">${icon('restart')} Watch again</button><button class="tour-btn primary" data-v="go">Continue →</button></div></div>`;
+    const frame = o.querySelector('.wg-frame'); frame.appendChild(v);
+    const tapBtn = document.createElement('button'); tapBtn.className = 'wg-play'; tapBtn.innerHTML = `${icon('play')}<span>Tap to play</span>`; tapBtn.hidden = true;
+    frame.appendChild(tapBtn);
+    document.body.appendChild(o); document.body.classList.add('video-on');
+    // the video waits for a tap, so the sound never surprises anyone
+    tapBtn.innerHTML = `${icon('play')}<span>Tap to play</span><small>🔊 This video has sound</small>`;
+    tapBtn.hidden = false;
+    o.querySelector('[data-v="again"]').hidden = true;
+    try { v.pause(); v.currentTime = 0; } catch (e) {}
+    const play = () => { v.muted = false; v.currentTime = 0; ui.music.duck('video', true); const pr = v.play(); if (pr && pr.catch) pr.catch(() => { tapBtn.hidden = false; ui.music.duck('video', false); }); };
+    tapBtn.onclick = () => { tapBtn.hidden = true; play(); };
+    v.onended = () => { o.classList.add('ended'); o.querySelector('[data-v="again"]').hidden = false; ui.music.duck('video', false); };
+    const close = () => { try { v.pause(); } catch (e) {} o.remove(); document.body.classList.remove('video-on'); ui.music.duck('video', false); };
+    o.querySelector('[data-v="again"]').onclick = () => { o.classList.remove('ended'); tapBtn.hidden = true; play(); };
+    o.querySelector('[data-v="go"]').onclick = () => { close(); onDone && onDone(); };
+    ui.closeVideo = close;
+    return o;
+  };
+  ui.closeVideo = () => {};
+
+  // ---------------------------------------------------------------
+  // Quiet background music (settings in js/data/music.js)
+  // ---------------------------------------------------------------
+  ui.music = (() => {
+    const M = window.MUSIC;
+    const stub = { duck() {}, set() {}, isOn: () => false };
+    if (!M || !M.songs || !M.songs.length) { const b = $('#musicBtn'); if (b) b.remove(); return stub; }
+    const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+    const audio = new Audio(); audio.loop = true; audio.preload = 'none'; audio.volume = M.volume ?? 0.6;
+    let on = store.get('pme-music') ? store.get('pme-music') === 'on' : M.on !== false;
+    let song = store.get('pme-song') || M.song || M.songs[0].id;
+    if (!M.songs.some(x => x.id === song)) song = M.songs[0].id;
+    const ducks = new Set(); let unlocked = false, hidden = false;
+    // iPads play the .m4a files; a few other browsers need the .webm copy
+    const useWebm = !audio.canPlayType('audio/mp4; codecs="mp4a.40.2"') && !!audio.canPlayType('audio/webm; codecs="opus"');
+    const fileOf = id => { const f = (M.songs.find(x => x.id === id) || M.songs[0]).file; return useWebm ? f.replace(/\.m4a$/, '.webm') : f; };
+    function apply() {
+      const want = on && unlocked && ducks.size === 0 && !hidden;
+      if (want) {
+        if (!audio.src.endsWith(fileOf(song))) audio.src = fileOf(song);
+        const pr = audio.play(); if (pr && pr.catch) pr.catch(() => {});
+      } else audio.pause();
+      const b = $('#musicBtn'); if (b) b.classList.toggle('muted', !on);
+      const t = $('#musicToggle'); if (t) t.checked = on;
+      document.querySelectorAll('[data-song]').forEach(r => { r.setAttribute('aria-checked', String(r.dataset.song === song)); r.classList.toggle('playing', r.dataset.song === song && want); });
+    }
+    // browsers only start sound after a tap, so wait for the first one
+    const unlock = () => { if (unlocked) return; unlocked = true; apply(); };
+    ['click', 'touchend', 'keydown'].forEach(ev => document.addEventListener(ev, unlock, true));
+    document.addEventListener('visibilitychange', () => { hidden = document.hidden; apply(); });
+    const set = (v) => { on = v; store.set('pme-music', on ? 'on' : 'off'); unlocked = true; apply(); };
+    const tg = $('#musicToggle'); if (tg) tg.onchange = () => set(tg.checked);
+    const list = $('#songList');
+    if (list) {
+      list.innerHTML = M.songs.map(x => `<button class="song" data-song="${esc(x.id)}" role="radio" aria-checked="false"><i></i><b>${esc(x.name)}</b><span>${esc(x.mood || '')}</span><em class="eq" aria-hidden="true"><u></u><u></u><u></u></em></button>`).join('');
+      list.querySelectorAll('[data-song]').forEach(r => r.onclick = () => { song = r.dataset.song; store.set('pme-song', song); on = true; store.set('pme-music', 'on'); unlocked = true; audio.src = fileOf(song); apply(); });
+    }
+    // the music pauses while a video plays or "Read to me" is talking
+    const api = {
+      duck(key, d) { if (d) ducks.add(key); else ducks.delete(key); apply(); },
+      set, isOn: () => on, _audio: audio
+    };
+    speech.onChange = (reading) => api.duck('speech', reading);
+    apply();
+    return api;
+  })();
+
+  // ---------------------------------------------------------------
   // About + first-time help
   // ---------------------------------------------------------------
   $('#aboutBody').innerHTML = `
@@ -385,6 +475,7 @@ export function createUI(api) {
     <p><b>How the continents move:</b> the positions of the continents for the last 300 million years come from a real plate-motion model made by scientists: Müller and others (2022), EarthByte Group, University of Sydney (from the GPlates plate model collection, CC BY 4.0). It is a model, so scientists are still improving it.</p>
     <p><b>Picture of Earth:</b> NASA Blue Marble (NASA Earth Observatory, public domain). Coastlines: Natural Earth (public domain).</p>
     <p><b>Photos and artwork:</b> collected from museums, fossil collectors, artists, and photo websites. The website each picture came from is listed under it.</p>
+    <p><b>Music:</b> by Kevin MacLeod (incompetech.com), licensed under Creative Commons: By Attribution 4.0. The songs have fun names on this site. Their real titles are: ${((window.MUSIC && window.MUSIC.songs) || []).map(x => `“${esc(x.original || x.name)}”`).join(', ')}.</p>
     <p><b>3D engine:</b> Three.js (MIT license). <b>Fonts:</b> Atkinson Hyperlegible and Big Shoulders Display (SIL Open Font License).</p>`;
   if ('requestFullscreen' in document.documentElement && !navigator.standalone) {
     $('#fullscreenBtn').hidden = false;
