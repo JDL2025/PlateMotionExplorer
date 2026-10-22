@@ -306,19 +306,20 @@ export function createUI(api) {
   // Pop-up box in the middle of the screen (students tap the button to close it)
   // ---------------------------------------------------------------
   let modalEl = null;
-  ui.modal = ({ title = '', text = '', button = 'OK', icon: ic = '', onOk = null } = {}) => {
+  ui.modal = ({ title = '', text = '', button = 'OK', icon: ic = '', onOk = null, buttons = null, tone = '' } = {}) => {
     ui.closeModal();
     speech.stop();
     const m = document.createElement('div'); m.className = 'modal-back';
-    m.innerHTML = `<div class="modal" role="dialog" aria-modal="true">
+    const btns = buttons || [{ label: button, onClick: onOk }];
+    m.innerHTML = `<div class="modal ${tone}" role="dialog" aria-modal="true">
         ${speech.ok ? `<button class="say-btn small modal-say"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg><span>Read to me</span></button>` : ''}
         ${ic ? `<div class="modal-ico">${icon(ic)}</div>` : ''}
         <div class="modal-body">${title ? `<h2>${esc(title)}</h2>` : ''}<p class="lead">${esc(text)}</p></div>
-        <button class="modal-ok">${esc(button)}</button>
+        <div class="modal-btns">${btns.map((b, i) => `<button class="modal-ok ${b.cls || ''}" data-mb="${i}">${esc(b.label)}</button>`).join('')}</div>
       </div>`;
     document.body.appendChild(m); modalEl = m;
     const sb = m.querySelector('.modal-say'); if (sb) sb.onclick = () => speech.read(m.querySelector('.modal-body'), sb);
-    m.querySelector('.modal-ok').onclick = () => { ui.closeModal(); onOk && onOk(); };
+    m.querySelectorAll('[data-mb]').forEach(el => el.onclick = () => { ui.closeModal(); const f = btns[+el.dataset.mb].onClick; f && f(); });
     return m;
   };
   ui.closeModal = () => { if (modalEl) { speech.stop(); modalEl.remove(); modalEl = null; } };

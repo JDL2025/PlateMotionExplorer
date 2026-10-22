@@ -675,3 +675,36 @@ button:focus-visible, input:focus-visible + span { outline: 3px solid var(--suns
 @keyframes tipIn { from { opacity: 0; transform: translate(20px, -50%); } to { opacity: 1; transform: translateY(-50%); } }
 @keyframes tipWiggle { 0%,100% { transform: translateX(-4px); } 50% { transform: translateX(6px); } }
 @media (orientation: portrait) and (max-width: 900px) { .side-tip { top: calc(150px + var(--safe-t)); transform: none; width: min(300px, 60vw); animation: none; } }
+.modal-btns { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+.modal-btns .modal-ok { min-width: 180px; }
+.modal-ok.hard, .modal.hard .modal-ok { background: #e2453c; color: #fff; box-shadow: 0 8px 22px rgba(226,69,60,.45); }
+.modal.hard { border-color: rgba(255,110,100,.7); box-shadow: 0 0 50px rgba(226,69,60,.35), 0 24px 60px rgba(0,0,0,.6); }
+.modal.hard .modal-ico { background: #e2453c; }
+.modal.hard .modal-ico svg { stroke: #fff; }
+
+/* puzzle timer */
+.pz-timer { margin-top: 6px; display: inline-flex; align-items: center; gap: 10px; padding: 5px 12px 5px 8px; border-radius: 14px; background: var(--glass); border: 1px solid var(--line); text-shadow: none; pointer-events: none; }
+.pz-timer svg { width: 22px; height: 22px; fill: none; stroke: var(--butterscotch); stroke-width: 2; stroke-linecap: round; }
+.pz-timer b { font-family: var(--display); font-weight: 800; font-size: 28px; line-height: 1; color: #fff; font-variant-numeric: tabular-nums; min-width: 62px; }
+.pz-timer span { font-size: 14px; color: var(--ink-dim); }
+.pz-timer .mode { padding: 2px 8px; border-radius: 999px; font-size: 12.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; background: var(--green); color: #0d2a1a; }
+.pz-timer .mode.hard { background: #e2453c; color: #fff; }
+.pz-result { display: flex; gap: 10px; flex-wrap: wrap; margin: 2px 0 12px; }
+.pz-result div { flex: 1; min-width: 120px; padding: 8px 12px; border-radius: 14px; background: var(--dusk-2); border: 1px solid var(--line); }
+.pz-result span { display: block; font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-dim); }
+.pz-result b { font-family: var(--display); font-weight: 800; font-size: 30px; color: var(--butterscotch); }
+.pz-result .best b { color: var(--green); }
+.newbest { display: inline-block; margin: 0 0 10px; padding: 4px 12px; border-radius: 999px; background: rgba(127,224,160,.18); border: 1px solid rgba(127,224,160,.6); color: var(--green); font-weight: 800; }
+.act.hard { background: #c9342c; border-color: #ff7a70; color: #fff; }
+.act.hard small { color: #ffd6d2; }
+.puzzle.hard-on .pz-ghost { opacity: 1; }
+
+/* "You've unlocked Hard Mode!" */
+.unlock { position: fixed; inset: 0; z-index: 66; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.unlock::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 45%, rgba(255,60,50,.55), rgba(120,0,0,.25) 40%, transparent 70%); animation: unlockFlash 2.8s ease-out forwards; }
+.unlock-box { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 22px 36px; border-radius: 26px; background: rgba(40,8,8,.85); border: 2px solid #ff6b60; box-shadow: 0 0 40px rgba(255,70,60,.9), 0 0 120px rgba(255,40,30,.5); animation: unlockPop 2.8s cubic-bezier(.2,.9,.3,1.2) forwards; }
+.unlock-box svg { width: 64px; height: 64px; fill: none; stroke: #ff8a80; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 10px #ff5a50); }
+.unlock-box b { font-family: var(--display); font-weight: 800; font-size: clamp(36px, 6.5vw, 64px); line-height: 1; color: #ff8a80; text-shadow: 0 0 20px rgba(255,80,70,.9); white-space: nowrap; }
+.unlock-box span { color: #fff; font-weight: 700; font-size: 19px; }
+@keyframes unlockFlash { 0% { opacity: 0; } 10% { opacity: 1; } 25% { opacity: .5; } 35% { opacity: 1; } 85% { opacity: .8; } 100% { opacity: 0; } }
+@keyframes unlockPop { 0% { opacity: 0; transform: scale(.3) rotate(-6deg); } 15% { opacity: 1; transform: scale(1.12) rotate(2deg); } 25% { transform: scale(1) rotate(0); } 85% { opacity: 1; } 100% { opacity: 0; transform: scale(1.05); } }

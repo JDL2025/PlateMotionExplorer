@@ -8,7 +8,9 @@
      cx, cy    the middle of the piece when solved
      sx, sy    where the piece starts on a wide (landscape) screen
      px, py    where the piece starts on a tall (portrait) screen
-   popup / button   the pop-up box students see when the puzzle starts
+     hx, hy / hpx, hpy   starting spots for Hard Mode (wide / tall screen)
+   title / popup / button   the pop-up box students see when the puzzle starts
+   hardPopup        the pop-up box for Hard Mode
    You can move a starting spot by changing sx and sy.
    ===================================================================== */
 window.PUZZLE = {
@@ -52,7 +54,11 @@ window.PUZZLE = {
    "sx": -800,
    "sy": 900,
    "px": 1100,
-   "py": -250
+   "py": -250,
+   "hx": -950,
+   "hy": -1150,
+   "hpx": -900,
+   "hpy": 400
   },
   {
    "id": "IN",
@@ -69,7 +75,11 @@ window.PUZZLE = {
    "sx": -1000,
    "sy": 150,
    "px": -950,
-   "py": -100
+   "py": -100,
+   "hx": -1050,
+   "hy": 50,
+   "hpx": 1100,
+   "hpy": -750
   },
   {
    "id": "AN",
@@ -86,7 +96,11 @@ window.PUZZLE = {
    "sx": -1150,
    "sy": 650,
    "px": -1050,
-   "py": 450
+   "py": 450,
+   "hx": -1150,
+   "hy": -650,
+   "hpx": 1200,
+   "hpy": -150
   },
   {
    "id": "AU",
@@ -103,7 +117,11 @@ window.PUZZLE = {
    "sx": -1000,
    "sy": -450,
    "px": -1000,
-   "py": -650
+   "py": -650,
+   "hx": -650,
+   "hy": 950,
+   "hpx": 1100,
+   "hpy": 450
   },
   {
    "id": "SA",
@@ -120,7 +138,11 @@ window.PUZZLE = {
    "sx": 1900,
    "sy": 560,
    "px": 1250,
-   "py": 350
+   "py": 350,
+   "hx": 2050,
+   "hy": -650,
+   "hpx": -1050,
+   "hpy": -150
   },
   {
    "id": "NA",
@@ -137,7 +159,11 @@ window.PUZZLE = {
    "sx": 1220,
    "sy": 560,
    "px": 100,
-   "py": 1150
+   "py": 1150,
+   "hx": 1300,
+   "hy": -700,
+   "hpx": 150,
+   "hpy": -1550
   },
   {
    "id": "GR",
@@ -154,7 +180,11 @@ window.PUZZLE = {
    "sx": -1000,
    "sy": -1000,
    "px": 1150,
-   "py": -700
+   "py": -700,
+   "hx": -1000,
+   "hy": 520,
+   "hpx": -950,
+   "hpy": -800
   },
   {
    "id": "EU",
@@ -171,7 +201,11 @@ window.PUZZLE = {
    "sx": 1500,
    "sy": -560,
    "px": 150,
-   "py": -1650
+   "py": -1650,
+   "hx": 1720,
+   "hy": 450,
+   "hpx": 150,
+   "hpy": 1300
   }
  ],
  "legend": [
@@ -190,7 +224,7 @@ window.PUZZLE = {
   [
    "lystrosaurus",
    "Lystrosaurus",
-   "#ffcf6b",
+   "#50a0ff",
    "flat stripes"
   ],
   [
@@ -200,6 +234,8 @@ window.PUZZLE = {
    "up-and-down stripes"
   ]
  ],
- "popup": "Drag the continents to their correct location to see if you can recreate ancient Earth.",
- "button": "Play the puzzle"
+ "popup": "Drag the continents to their correct spots to rebuild ancient Earth. The timer starts when you tap the button!",
+ "button": "Play the puzzle",
+ "title": "How fast can you build Pangaea?",
+ "hardPopup": "The continents are turned around, and there are no outlines inside Pangaea. To turn a continent, put two fingers on it and twist."
 };

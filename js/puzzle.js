@@ -2,6 +2,8 @@
 // Plate Motion Explorer — Pangaea Puzzle (a flat map)
 // Drag the continents to build Pangaea. Africa is already in place.
 // Pinch with two fingers to zoom in, and drag the ocean to move around.
+// A timer counts how fast you build it. Finishing it unlocks Hard Mode
+// (pieces turned around, only the outside edge of Pangaea is shown).
 // The pieces and their starting spots are in js/data/puzzle.js;
 // the pictures are in data/puzzle/.
 // =====================================================================
@@ -13,10 +15,13 @@ export function init(api, ui) {
   const root = document.getElementById('puzzle');
   const anchorId = P.anchor || 'AF';
   let pieces = [], board = null, view = { k: 1, ox: 0, oy: 0 }, shelfOn = false, solved = false;
-  let gesture = null, cardEl = null, timers = [], viewAnim = null;
+  let gesture = null, cardEl = null, timers = [], viewAnim = null, mode = 'easy';
+  const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+  const hardUnlocked = () => store.get('pme-hard-unlocked') === '1';
   const later = (ms, f) => { const id = setTimeout(f, ms); timers.push(id); return id; };
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-  const TOP = 84, BOTTOM = 100;     // room for the title and the menu bar
+  const norm = a => ((a % 360) + 540) % 360 - 180;
+  const TOP = 128, BOTTOM = 100;    // room for the title, timer, and the menu bar
 
   // ---------------------------------------------------------------
   function start() {
@@ -24,22 +29,46 @@ export function init(api, ui) {
     ui.startActivity({ id: 'puzzle', title: 'Pangaea Puzzle', bodyClass: 'puzzle-on', noBar: true, onStop: cleanup });
     root.hidden = false;
     build();
-    reset();
+    mode = 'easy'; reset();
     welcome();
   }
   function welcome() {
-    ui.modal({ title: 'Can you recreate Pangaea?', text: P.popup || 'Drag the continents to their correct location to see if you can recreate ancient Earth.',
-      button: P.button || 'Play the puzzle', icon: 'puzzle' });
+    const title = P.title || 'How fast can you build Pangaea?';
+    const text = P.popup || 'Drag the continents to their correct spots to rebuild ancient Earth.';
+    if (hardUnlocked()) ui.modal({ title, text: text + ' Pick a mode.', icon: 'puzzle',
+      buttons: [{ label: 'Easy', onClick: () => begin('easy') }, { label: 'Hard Mode', cls: 'hard', onClick: () => begin('hard') }] });
+    else ui.modal({ title, text, icon: 'puzzle', button: P.button || 'Play the puzzle', onOk: () => begin('easy') });
   }
+  // start a new game in Easy or Hard Mode (the timer starts when the button is tapped)
+  function begin(m) {
+    closeCard();
+    mode = m; reset();
+    if (mode === 'hard') ui.modal({ title: 'Hard Mode!', tone: 'hard', icon: 'rotr', text: P.hardPopup || 'The continents are turned around, and there are no outlines inside Pangaea. To turn a continent, put two fingers on it and twist.', button: 'Play Hard Mode', onOk: startTimer });
+    else startTimer();
+  }
+
+  // ---------- timer ----------
+  let t0 = 0, tick = null, elapsed = 0;
+  const fmtTime = sec => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
+  const best = () => { const v = parseFloat(store.get('pme-best-' + mode)); return isFinite(v) ? v : null; };
+  function showTimer() {
+    const el = root.querySelector('#pzTimer'); if (!el) return;
+    const b = best();
+    el.innerHTML = `<svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9.5 2.5h5"/></svg><b>${fmtTime(elapsed)}</b><span class="mode ${mode}">${mode === 'hard' ? 'Hard' : 'Easy'}</span>${b !== null ? `<span>Best: ${fmtTime(b)}</span>` : ''}`;
+  }
+  function startTimer() {
+    stopTimer(); elapsed = 0; t0 = performance.now(); showTimer();
+    tick = setInterval(() => { elapsed = (performance.now() - t0) / 1000; showTimer(); }, 250);
+  }
+  function stopTimer() { if (tick) { clearInterval(tick); tick = null; elapsed = (performance.now() - t0) / 1000; } }
+
   function build() {
     root.innerHTML = `
       <div class="pz-board" id="pzBoard"><div class="pz-grid"></div></div>
-      <div class="pz-top"><h2>Pangaea Puzzle</h2><p id="pzHint"></p></div>
+      <div class="pz-top"><h2>Pangaea Puzzle</h2><p id="pzHint"></p><div class="pz-timer" id="pzTimer"></div></div>
       <div class="pz-count" id="pzCount"></div>
       <div class="pz-bar">
         <button class="dock-btn" data-p="exit">${icon('x')}<span>Exit</span></button>
-        <button class="dock-btn" data-p="zin"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21M10.5 7.5v6M7.5 10.5h6"/></svg><span>Zoom in</span></button>
-        <button class="dock-btn" data-p="zout"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21M7.5 10.5h6"/></svg><span>Zoom out</span></button>
         <button class="dock-btn" data-p="all">${icon('eye')}<span>See all</span></button>
         <button class="dock-btn" data-p="shelf" aria-pressed="false">${icon('shelf')}<span>Shelves</span></button>
         <button class="dock-btn" data-p="again">${icon('restart')}<span>Start over</span></button>
@@ -47,13 +76,12 @@ export function init(api, ui) {
       </div>`;
     board = root.querySelector('#pzBoard');
     root.querySelector('[data-p="exit"]').onclick = () => ui.exitActivity();
-    root.querySelector('[data-p="zin"]').onclick = () => zoomBy(1.6);
-    root.querySelector('[data-p="zout"]').onclick = () => zoomBy(1 / 1.6);
     root.querySelector('[data-p="all"]').onclick = () => fit(true);
     root.querySelector('[data-p="shelf"]').onclick = () => setShelf(!shelfOn, true);
-    root.querySelector('[data-p="again"]').onclick = () => { closeCard(); reset(); };
+    root.querySelector('[data-p="again"]').onclick = () => { closeCard(); reset(); startTimer(); };
     root.querySelector('[data-p="help"]').onclick = () => ui.modal({ title: 'How to play', icon: 'question', button: 'OK',
-      text: 'Drag a continent with one finger. Use the faint outlines to find where it goes. To zoom in, pinch with two fingers or tap Zoom in. To move around, drag the ocean.' });
+      text: mode === 'hard' ? 'Drag a continent with one finger. To turn it, put two fingers on it and twist. Fit it inside the outline of Pangaea. Pinch the ocean to zoom in, and drag the ocean to move around.'
+                            : 'Drag a continent with one finger. Use the faint outlines to find where it goes. Pinch with two fingers to zoom in, and drag the ocean to move around.' });
     // overlays (ghost outlines, fossil stripes)
     const o = P.overlay;
     const ghost = document.createElement('img'); ghost.className = 'pz-ghost'; ghost.src = 'data/puzzle/ghost.webp'; ghost.draggable = false;
@@ -67,7 +95,7 @@ export function init(api, ui) {
       el.innerHTML = `<img class="shelf" src="data/puzzle/${d.id}_shelf.webp" width="${d.w}" height="${d.h}" draggable="false" alt=""><img class="land" src="data/puzzle/${d.id}_land.webp" width="${d.w}" height="${d.h}" draggable="false" alt="${esc(d.name)}">`;
       board.appendChild(el);
       const name = document.createElement('div'); name.className = 'pz-name'; name.textContent = d.name;
-      const pc = { d, el, name, x: d.cx, y: d.cy, placed: false, z: i, mask: null };
+      const pc = { d, el, name, x: d.cx, y: d.cy, r: 0, placed: false, z: i, mask: null };
       loadMask(pc);
       return pc;
     });
@@ -171,7 +199,7 @@ export function init(api, ui) {
     const d = pc.d, k = view.k;
     const px = d.cx - d.x, py = d.cy - d.y;       // the middle of the piece, inside its picture
     const sx = view.ox + pc.x * k, sy = view.oy + pc.y * k;
-    pc.el.style.transform = `translate(${sx}px, ${sy}px) scale(${k}) translate(${-px}px, ${-py}px)`;
+    pc.el.style.transform = `translate(${sx}px, ${sy}px) rotate(${pc.r}deg) scale(${k}) translate(${-px}px, ${-py}px)`;
     pc.el.style.zIndex = pc.placed ? 1 : 2 + pc.z;
     pc.name.style.transform = `translate(${sx}px, ${sy}px) translate(-50%, -50%)`;
     pc.name.style.zIndex = 300;
@@ -180,8 +208,8 @@ export function init(api, ui) {
   // is this spot on the piece? (with extra room, so small pieces are easy to grab)
   function hit(pc, bx, by) {
     if (!pc.mask) return false;
-    const d = pc.d;
-    const lx = bx - pc.x + (d.cx - d.x), ly = by - pc.y + (d.cy - d.y);
+    const d = pc.d, a = -pc.r * Math.PI / 180, dx = bx - pc.x, dy = by - pc.y;
+    const lx = dx * Math.cos(a) - dy * Math.sin(a) + (d.cx - d.x), ly = dx * Math.sin(a) + dy * Math.cos(a) + (d.cy - d.y);
     const { m, w, h, sc } = pc.mask;
     const ix = Math.floor(lx * sc), iy = Math.floor(ly * sc);
     const pad = Math.max(2, Math.ceil(14 / view.k * sc));
@@ -207,18 +235,27 @@ export function init(api, ui) {
   function reset() {
     solved = false;
     root.stripes.classList.remove('on');
-    const tall = portrait();
+    root.classList.toggle('hard-on', mode === 'hard');
+    root.ghost.src = mode === 'hard' ? 'data/puzzle/outline.webp' : 'data/puzzle/ghost.webp';
+    const tall = portrait(), hard = mode === 'hard';
     pieces.forEach((pc, i) => {
-      pc.placed = pc.d.id === anchorId;
+      const d = pc.d;
+      pc.placed = d.id === anchorId;
       pc.el.classList.remove('placed', 'lift');
-      if (pc.placed) { pc.x = pc.d.cx; pc.y = pc.d.cy; pc.el.classList.add('placed'); }
-      else if (tall && pc.d.px !== undefined) { pc.x = pc.d.px; pc.y = pc.d.py; }
-      else { pc.x = pc.d.sx; pc.y = pc.d.sy; }
+      pc.r = 0;
+      if (pc.placed) { pc.x = d.cx; pc.y = d.cy; pc.el.classList.add('placed'); }
+      else if (hard) {
+        if (tall && d.hpx !== undefined) { pc.x = d.hpx; pc.y = d.hpy; } else { pc.x = d.hx ?? d.sx; pc.y = d.hy ?? d.sy; }
+        pc.r = (Math.random() < 0.5 ? -1 : 1) * (60 + Math.round(Math.random() * 11) * 10);   // turned 60° to 170°
+      }
+      else if (tall && d.px !== undefined) { pc.x = d.px; pc.y = d.py; }
+      else { pc.x = d.sx; pc.y = d.sy; }
       pc.z = i;
     });
     setShelf(false);
     fit(false); count();
-    say('Drag each continent to where it fits. Pinch to zoom in.');
+    elapsed = 0; showTimer();
+    say(hard ? 'Turn each continent with two fingers, then fit it inside Pangaea.' : 'Drag each continent to where it fits. Pinch to zoom in.');
   }
   function say(t) { root.querySelector('#pzHint').textContent = t; }
   function count() {
@@ -254,8 +291,13 @@ export function init(api, ui) {
         edgeLoop();
       } else gesture = { type: 'pan', id: e.pointerId, x: e.clientX, y: e.clientY, ox: view.ox, oy: view.oy };
     } else if (ptrs.size === 2) {
-      if (gesture && gesture.type === 'piece') { const pc = gesture.pc; pc.el.classList.remove('lift'); checkSnap(pc); }
       const [a, c] = [...ptrs.values()];
+      if (gesture && gesture.type === 'piece' && mode === 'hard') {   // two fingers on a piece: twist to turn it
+        const pc = gesture.pc;
+        gesture = { type: 'twist', pc, a0: Math.atan2(c.y - a.y, c.x - a.x), r0: pc.r, mx: (a.x + c.x) / 2, my: (a.y + c.y) / 2, x0: pc.x, y0: pc.y };
+        return;
+      }
+      if (gesture && gesture.type === 'piece') { const pc = gesture.pc; pc.el.classList.remove('lift'); checkSnap(pc); }
       gesture = { type: 'pinch', d0: Math.hypot(a.x - c.x, a.y - c.y) || 1, k0: view.k, mx: (a.x + c.x) / 2, my: (a.y + c.y) / 2, ox: view.ox, oy: view.oy };
     }
   }
@@ -271,6 +313,11 @@ export function init(api, ui) {
     } else if (gesture.type === 'pan' && e.pointerId === gesture.id) {
       view = clampView({ k: view.k, ox: gesture.ox + e.clientX - gesture.x, oy: gesture.oy + e.clientY - gesture.y });
       applyView();
+    } else if (gesture.type === 'twist' && ptrs.size >= 2) {
+      const [a, c] = [...ptrs.values()], g = gesture, pc = g.pc;
+      pc.r = norm(g.r0 + (Math.atan2(c.y - a.y, c.x - a.x) - g.a0) * 180 / Math.PI);
+      pc.x = g.x0 + ((a.x + c.x) / 2 - g.mx) / view.k; pc.y = g.y0 + ((a.y + c.y) / 2 - g.my) / view.k;
+      place(pc);
     } else if (gesture.type === 'pinch' && ptrs.size >= 2) {
       const [a, c] = [...ptrs.values()], g = gesture;
       const k = clamp(g.k0 * Math.hypot(a.x - c.x, a.y - c.y) / g.d0, kMin, kMax());
@@ -283,6 +330,14 @@ export function init(api, ui) {
   function up(e) {
     ptrs.delete(e.pointerId);
     if (!gesture) return;
+    if (gesture.type === 'twist') {
+      const pc = gesture.pc;
+      if (ptrs.size === 1) {   // one finger left: keep dragging with it
+        const [id, q] = [...ptrs.entries()][0], b = toBoard(q.x, q.y);
+        gesture = { type: 'piece', pc, id, gx: b.x - pc.x, gy: b.y - pc.y }; lastPtr = { x: q.x, y: q.y };
+      } else if (ptrs.size === 0) { pc.el.classList.remove('lift'); gesture = null; checkSnap(pc); }
+      return;
+    }
     if (gesture.type === 'pinch') {
       if (ptrs.size === 1) { const [id, q] = [...ptrs.entries()][0]; gesture = { type: 'pan', id, x: q.x, y: q.y, ox: view.ox, oy: view.oy }; }
       else if (ptrs.size === 0) gesture = null;
@@ -321,21 +376,25 @@ export function init(api, ui) {
     zoomAt(Math.exp(-clamp(e.deltaY, -120, 120) * (e.ctrlKey ? 0.012 : 0.003)), e.clientX, e.clientY);
   }
   function checkSnap(pc) {
-    const tol = Math.min(0.2 * P.S, Math.max(0.11 * P.S, 34 / view.k));
-    const dist = Math.hypot(pc.x - pc.d.cx, pc.y - pc.d.cy);
-    if (dist < tol) {
-      const fx = pc.x, fy = pc.y;
+    const hard = mode === 'hard';
+    const tol = hard ? Math.min(0.08 * P.S, Math.max(0.05 * P.S, 16 / view.k))      // Hard Mode: be more exact
+                     : Math.min(0.2 * P.S, Math.max(0.11 * P.S, 34 / view.k));
+    const tolR = hard ? 12 : 360;
+    const dist = Math.hypot(pc.x - pc.d.cx, pc.y - pc.d.cy), dr = Math.abs(norm(pc.r));
+    if (dist < tol && dr < tolR) {
+      const fx = pc.x, fy = pc.y, fr = norm(pc.r);
       pc.placed = true;
-      const t0 = performance.now();
+      const t0s = performance.now();
       const step = (now) => {
-        const t = Math.min(1, (now - t0) / 260), e2 = 1 - Math.pow(1 - t, 3);
-        pc.x = fx + (pc.d.cx - fx) * e2; pc.y = fy + (pc.d.cy - fy) * e2;
+        const t = Math.min(1, (now - t0s) / 260), e2 = 1 - Math.pow(1 - t, 3);
+        pc.x = fx + (pc.d.cx - fx) * e2; pc.y = fy + (pc.d.cy - fy) * e2; pc.r = fr * (1 - e2);
         place(pc);
         if (t < 1) requestAnimationFrame(step);
-        else { pc.x = pc.d.cx; pc.y = pc.d.cy; place(pc); pc.el.classList.add('placed'); glow(pc); count(); afterPlace(pc); }
+        else { pc.x = pc.d.cx; pc.y = pc.d.cy; pc.r = 0; place(pc); pc.el.classList.add('placed'); glow(pc); count(); afterPlace(pc); }
       };
       requestAnimationFrame(step);
-    }
+    } else if (hard && dist < tol * 2.5 && dr >= tolR) say(`${pc.d.name} is in the right spot! Now turn it with two fingers.`);
+    else if (hard && dr < tolR && dist < tol * 2.5) say(`${pc.d.name} is turned the right way. Move it a little closer!`);
   }
   // each continent glows its own color when it snaps into place
   const GLOW = { NA: '#ff8f7a', GR: '#e8f6ff', SA: '#7fe0a0', EU: '#c39bff', MG: '#ff7ac8', IN: '#ffd84d', AU: '#ffa94d', AN: '#7fd3ff', AF: '#e9b47c' };
@@ -368,25 +427,44 @@ export function init(api, ui) {
   // ---------------------------------------------------------------
   function win() {
     solved = true;
-    say('You built Pangaea!');
+    stopTimer();
+    const time = elapsed, old = best(), newBest = old === null || time < old;
+    if (newBest) store.set('pme-best-' + mode, time.toFixed(1));
+    showTimer();
+    const unlockNow = mode === 'easy' && !hardUnlocked();
+    if (unlockNow) store.set('pme-hard-unlocked', '1');
+    say(mode === 'hard' ? 'You beat Hard Mode!' : 'You built Pangaea!');
     fit(true, true);
     pieces.forEach(pc => glow(pc));
-    later(500, () => ui.celebrate('You built Pangaea!', 'All the continents fit together!'));
+    later(500, () => ui.celebrate(mode === 'hard' ? 'You beat Hard Mode!' : 'You built Pangaea!', `Your time: ${fmtTime(time)}`));
     later(700, () => root.stripes.classList.add('on'));
-    later(3800, () => {
+    if (unlockNow) later(4100, unlockFlash);
+    later(unlockNow ? 7000 : 3800, () => {
       const L = (P.legend || []).map(([id, name, col, pat]) => `<div><i style="width:34px;height:12px;border-radius:3px;background:${col};flex:none"></i><span><b>${esc(name)}</b> (${esc(pat)})</span></div>`).join('');
-      cardEl = card(`<h2>You built Pangaea!</h2>
+      const playHard = mode === 'easy' && hardUnlocked();
+      cardEl = card(`<h2>${mode === 'hard' ? 'You beat Hard Mode!' : 'You built Pangaea!'}</h2>
+        ${newBest ? `<span class="newbest">🏆 New best time!</span>` : ''}
+        <div class="pz-result"><div><span>Your time</span><b>${fmtTime(time)}</b></div><div class="best"><span>Best time (${mode === 'hard' ? 'Hard' : 'Easy'})</span><b>${fmtTime(newBest ? time : old)}</b></div></div>
         <p class="lead">This is about how the continents fit together ${P.T} million years ago.</p>
         <ul class="bul"><li>Pangaea means “all lands.”</li><li>The colored stripes show where four kinds of fossils are found.</li><li>Look! The stripes line up across the edges of the continents.</li>
         ${shelfOn ? '<li>With the shelves on, the continents fit together even better.</li>' : '<li>Tap <b>Shelves</b> at the bottom. The continents fit even better at the edge of their shelves!</li>'}</ul>
         <div class="legend">${L}</div>
         <div class="box evidence"><h3>${icon('check')}The evidence</h3><p>The continents fit together like puzzle pieces, and the fossils line up across them. This is evidence that the continents were once joined, and that they have moved over time.</p></div>
-        <div class="actions"><button class="act primary" data-w="globe">${icon('hourglass')}<span>Watch Pangaea break apart<small>Opens the Time Machine</small></span></button>
-        <button class="act" data-w="again">${icon('restart')}<span>Play again</span></button></div>`, true);
+        <div class="actions">
+          ${playHard ? `<button class="act hard" data-w="hard">${icon('rotr')}<span>Play Hard Mode<small>Turn the pieces yourself, no outlines inside</small></span></button>` : ''}
+          <button class="act ${playHard ? '' : 'primary'}" data-w="again">${icon('restart')}<span>Play again and beat your time</span></button>
+          <button class="act" data-w="globe">${icon('hourglass')}<span>Watch Pangaea break apart<small>Opens the Time Machine</small></span></button></div>`, true);
       fit(true, true);
+      cardEl.querySelector('[data-w="hard"]')?.addEventListener('click', () => begin('hard'));
       cardEl.querySelector('[data-w="globe"]').onclick = () => { ui.exitActivity(); setTimeout(() => ui.go('time'), 300); };
-      cardEl.querySelector('[data-w="again"]').onclick = () => { closeCard(); reset(); };
+      cardEl.querySelector('[data-w="again"]').onclick = () => begin(mode);
     });
+  }
+  // a red glowing flash: Hard Mode is unlocked
+  function unlockFlash() {
+    const u = document.createElement('div'); u.className = 'unlock';
+    u.innerHTML = `<div class="unlock-box"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.6-1.8"/></svg><b>You’ve unlocked Hard Mode!</b><span>Can you build Pangaea with no outlines?</span></div>`;
+    document.body.appendChild(u); later(2900, () => u.remove());
   }
 
   // a card inside the puzzle screen (with Read to me)
@@ -403,7 +481,8 @@ export function init(api, ui) {
   function closeCard() { ui.speech.stop(); if (cardEl) { cardEl.remove(); cardEl = null; } }
 
   function cleanup() {
-    timers.forEach(clearTimeout); timers = [];
+    timers.forEach(clearTimeout); timers = []; stopTimer();
+    document.querySelectorAll('.unlock').forEach(u => u.remove());
     if (viewAnim) cancelAnimationFrame(viewAnim); viewAnim = null;
     if (edgeRAF) cancelAnimationFrame(edgeRAF); edgeRAF = null;
     closeCard(); ui.closeModal();
@@ -412,6 +491,6 @@ export function init(api, ui) {
     ptrs.clear(); gesture = null;
   }
   // for testing: screen spot of a piece's middle, now and when solved
-  const where = (id) => { const pc = pieces.find(q => q.d.id === id); return pc && { now: [view.ox + pc.x * view.k, view.oy + pc.y * view.k], goal: [view.ox + pc.d.cx * view.k, view.oy + pc.d.cy * view.k], placed: pc.placed, k: view.k }; };
-  return { start, where, zoomBy };
+  const where = (id) => { const pc = pieces.find(q => q.d.id === id); return pc && { now: [view.ox + pc.x * view.k, view.oy + pc.y * view.k], goal: [view.ox + pc.d.cx * view.k, view.oy + pc.d.cy * view.k], placed: pc.placed, k: view.k, r: pc.r }; };
+  return { start, where, zoomBy, begin, mode: () => mode, time: () => elapsed };
 }

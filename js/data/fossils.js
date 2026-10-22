@@ -99,7 +99,7 @@ window.FOSSILS = {
       id: 'lystrosaurus',
       name: 'Lystrosaurus',
       kind: 'Plant-eating animal',
-      color: '#ffcf6b',
+      color: '#50a0ff',
       age: 250,
       thumb: 'photos/thumbs/lystrosaurus.jpg',
       short: 'A plant eater about the size of a pig, with two tusks.',
